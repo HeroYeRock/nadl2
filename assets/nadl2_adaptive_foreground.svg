@@ -1,0 +1,59 @@
+<svg width="432" height="432" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+  <!-- 어댑티브 아이콘 전경: 투명 배경 + 안전 영역(가운데 ~66%)에 들어갈 콘텐츠 -->
+  <!-- 안전 영역 기준: 432x432 캔버스, 콘텐츠는 대략 144 ~ 288 사이 안에 위치하도록 -->
+
+  <!-- 노트 그림자 -->
+  <rect x="146" y="100" width="200" height="232" rx="20"
+        fill="rgba(0,0,0,0.14)"
+        transform="rotate(-4 246 216)"/>
+
+  <!-- 노트 본체 -->
+  <g transform="translate(240,212) rotate(-4)">
+    <rect x="-95" y="-112" width="190" height="232" rx="18" fill="white"/>
+    <rect x="-95" y="-112" width="190" height="44" rx="18" fill="rgba(255,255,255,0.6)"/>
+
+    <!-- 링 스프링 -->
+    <g fill="none" stroke="#8BAAC0" stroke-width="6" stroke-linecap="round">
+      <path d="M-42 -112 Q-42 -130 -42 -136 Q-42 -146 -34 -146 Q-26 -146 -26 -136 Q-26 -130 -26 -112"/>
+      <path d="M-8 -112 Q-8 -130 -8 -136 Q-8 -146 0 -146 Q8 -146 8 -136 Q8 -130 8 -112"/>
+      <path d="M26 -112 Q26 -130 26 -136 Q26 -146 34 -146 Q42 -146 42 -136 Q42 -130 42 -112"/>
+    </g>
+
+    <!-- 아이템 1: 이동/비행 (파랑) -->
+    <circle cx="-58" cy="-64" r="20" fill="#0A84FF"/>
+    <path d="M-64 -64 L-58 -70 L-52 -64 L-58 -58 Z" fill="white" opacity="0.92"/>
+    <rect x="-36" y="-68" width="68" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="-58" width="50" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 2: 위치/관광 (주황) -->
+    <circle cx="-58" cy="-14" r="20" fill="#FF6B35"/>
+    <circle cx="-58" cy="-18" r="9" fill="white" opacity="0.92"/>
+    <circle cx="-58" cy="4" r="4" fill="white" opacity="0.7"/>
+    <rect x="-36" y="-18" width="62" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="-8" width="44" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 3: 카메라/액티비티 (황색) -->
+    <circle cx="-58" cy="36" r="20" fill="#FF9500"/>
+    <rect x="-69" y="30" width="22" height="16" rx="5" fill="white" opacity="0.92"/>
+    <circle cx="-58" cy="38" r="6" fill="#FF9500"/>
+    <circle cx="-58" cy="38" r="3" fill="white"/>
+    <rect x="-36" y="32" width="72" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="42" width="54" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 4: 음식/먹방 (그린) -->
+    <circle cx="-58" cy="86" r="20" fill="#30D158"/>
+    <path d="M-64 78 L-64 94 M-58 78 Q-52 82 -58 86 Q-64 90 -58 94 M-52 78 L-52 94"
+          stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <rect x="-36" y="82" width="60" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="92" width="42" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+  </g>
+
+  <!-- 우하단 지도 핀 (살짝 안쪽으로 당겨서 마스크 컷오프 회피) -->
+  <g transform="translate(340, 308)">
+    <ellipse cx="0" cy="50" rx="20" ry="9" fill="rgba(0,0,0,0.18)"/>
+    <circle cx="0" cy="0" r="34" fill="#FF6B35"/>
+    <circle cx="-9" cy="-11" r="8" fill="rgba(255,255,255,0.28)"/>
+    <circle cx="0" cy="-2" r="15" fill="white" opacity="0.95"/>
+    <path d="M0 32 L0 48" stroke="#FF6B35" stroke-width="12" stroke-linecap="round"/>
+  </g>
+</svg>

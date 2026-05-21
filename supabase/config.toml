@@ -1,0 +1,19 @@
+project_id = "nadl2"
+
+[functions.places-autocomplete]
+verify_jwt = true
+
+[functions.place-detail]
+verify_jwt = true
+
+[functions.places-nearby]
+verify_jwt = true
+
+[functions.places-textsearch]
+verify_jwt = true
+
+[functions.places-photo]
+verify_jwt = true
+
+[functions.ai-recommend]
+verify_jwt = true

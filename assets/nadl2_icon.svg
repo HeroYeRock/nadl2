@@ -1,0 +1,104 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="appclip">
+      <rect width="400" height="400" rx="90"/>
+    </clipPath>
+    <clipPath id="noteclip">
+      <rect x="80" y="40" width="200" height="240" rx="16"/>
+    </clipPath>
+  </defs>
+
+  <!-- 전체 콘텐츠를 라운드 컷에 클립 -->
+  <g clip-path="url(#appclip)">
+
+  <!-- 배경 -->
+  <rect width="400" height="400" rx="90" fill="#5BB8F5"/>
+  <rect width="400" height="220" fill="#7DCBF8" opacity="0.45"/>
+
+  <!-- 지도 영역 -->
+  <rect x="-10" y="220" width="420" height="200" fill="#E8DCC8"/>
+  <rect x="60" y="220" width="28" height="200" fill="#F5F0E8" opacity="0.8"/>
+  <rect x="190" y="220" width="22" height="200" fill="#F5F0E8" opacity="0.8"/>
+  <rect x="-10" y="290" width="420" height="18" fill="#F5F0E8" opacity="0.8"/>
+  <rect x="100" y="240" width="72" height="44" rx="10" fill="#A8D87A" opacity="0.7"/>
+  <rect x="230" y="225" width="80" height="36" rx="8" fill="#A8D87A" opacity="0.6"/>
+
+  <!-- 구름 왼쪽 -->
+  <ellipse cx="48" cy="110" rx="30" ry="20" fill="white" opacity="0.85"/>
+  <ellipse cx="72" cy="100" rx="26" ry="18" fill="white" opacity="0.85"/>
+  <ellipse cx="30" cy="120" rx="22" ry="16" fill="white" opacity="0.75"/>
+
+  <!-- 구름 오른쪽 -->
+  <ellipse cx="338" cy="80" rx="26" ry="18" fill="white" opacity="0.8"/>
+  <ellipse cx="362" cy="72" rx="22" ry="16" fill="white" opacity="0.8"/>
+
+  <!-- 비행기 궤적 -->
+  <path d="M330 160 Q290 100 240 68" stroke="white" stroke-width="3" stroke-dasharray="7,5" fill="none" opacity="0.7" stroke-linecap="round"/>
+
+  <!-- 비행기 -->
+  <g transform="translate(234,60) rotate(-35)">
+    <path d="M0 0 L14 -7 L14 7 Z" fill="white"/>
+    <path d="M0 0 L-10 -10 L-7 0 L-10 10 Z" fill="white" opacity="0.8"/>
+    <path d="M-4 0 L-14 -4 L-12 0 L-14 4 Z" fill="white" opacity="0.6"/>
+  </g>
+
+  <!-- 노트 그림자 -->
+  <rect x="106" y="60" width="192" height="224" rx="18" fill="rgba(0,0,0,0.13)" transform="rotate(-4 200 172)"/>
+
+  <!-- 노트 본체 — 회전 + 클리핑 없이 뷰박스 안에 맞게 -->
+  <g transform="translate(200,175) rotate(-4)">
+    <!-- 노트 배경 -->
+    <rect x="-92" y="-108" width="184" height="224" rx="16" fill="white"/>
+    <!-- 상단 밝기 -->
+    <rect x="-92" y="-108" width="184" height="44" rx="16" fill="rgba(255,255,255,0.55)"/>
+
+    <!-- 링 스프링 3개 -->
+    <g fill="none" stroke="#8BAAC0" stroke-width="6" stroke-linecap="round">
+      <path d="M-42 -108 Q-42 -126 -42 -132 Q-42 -142 -34 -142 Q-26 -142 -26 -132 Q-26 -126 -26 -108"/>
+      <path d="M-8 -108 Q-8 -126 -8 -132 Q-8 -142 0 -142 Q8 -142 8 -132 Q8 -126 8 -108"/>
+      <path d="M26 -108 Q26 -126 26 -132 Q26 -142 34 -142 Q42 -142 42 -132 Q42 -126 42 -108"/>
+    </g>
+
+    <!-- 아이템 1: 이동/비행 (파랑) -->
+    <circle cx="-56" cy="-62" r="20" fill="#0A84FF"/>
+    <path d="M-62 -62 L-56 -68 L-50 -62 L-56 -56 Z" fill="white" opacity="0.9"/>
+    <rect x="-36" y="-66" width="66" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="-56" width="50" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 2: 위치/관광 (주황) -->
+    <circle cx="-56" cy="-14" r="20" fill="#FF6B35"/>
+    <circle cx="-56" cy="-18" r="9" fill="white" opacity="0.9"/>
+    <circle cx="-56" cy="4" r="4" fill="white" opacity="0.7"/>
+    <rect x="-36" y="-18" width="60" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="-8" width="44" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 3: 카메라/액티비티 (황색) -->
+    <circle cx="-56" cy="34" r="20" fill="#FF9500"/>
+    <rect x="-67" y="28" width="22" height="16" rx="5" fill="white" opacity="0.9"/>
+    <circle cx="-56" cy="36" r="6" fill="#FF9500"/>
+    <circle cx="-56" cy="36" r="3" fill="white"/>
+    <rect x="-36" y="30" width="70" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="40" width="52" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+
+    <!-- 아이템 4: 음식/먹방 (그린) -->
+    <circle cx="-56" cy="82" r="20" fill="#30D158"/>
+    <path d="M-62 74 L-62 90 M-56 74 Q-50 78 -56 82 Q-62 86 -56 90 M-50 74 L-50 90" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <rect x="-36" y="78" width="58" height="7" rx="3.5" fill="#E8E8ED"/>
+    <rect x="-36" y="88" width="40" height="5" rx="2.5" fill="#E8E8ED" opacity="0.6"/>
+  </g>
+
+  <!-- 지도 핀 (우하단) -->
+  <g transform="translate(298, 272)">
+    <ellipse cx="0" cy="50" rx="18" ry="8" fill="rgba(0,0,0,0.15)"/>
+    <circle cx="0" cy="0" r="32" fill="#FF6B35"/>
+    <circle cx="-8" cy="-10" r="8" fill="rgba(255,255,255,0.25)"/>
+    <circle cx="0" cy="-2" r="14" fill="white" opacity="0.92"/>
+    <path d="M0 30 L0 46" stroke="#FF6B35" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <!-- Nadl2 텍스트 하단 -->
+  <text x="182" y="374" text-anchor="middle" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="34" font-weight="800" letter-spacing="-1" fill="white" opacity="0.95">Nadl</text>
+  <text x="268" y="374" text-anchor="middle" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="34" font-weight="800" fill="#FF6B35">2</text>
+
+  </g>
+</svg>
