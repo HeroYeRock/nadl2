@@ -1,0 +1,276 @@
+diff --git a/node_modules/@supabase/supabase-js/._LICENSE b/node_modules/@supabase/supabase-js/._LICENSE
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/._LICENSE differ
+diff --git a/node_modules/@supabase/supabase-js/._README.md b/node_modules/@supabase/supabase-js/._README.md
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/._README.md differ
+diff --git a/node_modules/@supabase/supabase-js/._dist b/node_modules/@supabase/supabase-js/._dist
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/._dist differ
+diff --git a/node_modules/@supabase/supabase-js/._package.json b/node_modules/@supabase/supabase-js/._package.json
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/._package.json differ
+diff --git a/node_modules/@supabase/supabase-js/._src b/node_modules/@supabase/supabase-js/._src
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/._src differ
+diff --git a/node_modules/@supabase/supabase-js/LICENSE b/node_modules/@supabase/supabase-js/LICENSE
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/README.md b/node_modules/@supabase/supabase-js/README.md
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.cjs b/node_modules/@supabase/supabase-js/dist/._cors.cjs
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.cjs differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.cjs.map b/node_modules/@supabase/supabase-js/dist/._cors.cjs.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.cjs.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.d.cts b/node_modules/@supabase/supabase-js/dist/._cors.d.cts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.d.cts differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.d.cts.map b/node_modules/@supabase/supabase-js/dist/._cors.d.cts.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.d.cts.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.d.mts b/node_modules/@supabase/supabase-js/dist/._cors.d.mts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.d.mts differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.d.mts.map b/node_modules/@supabase/supabase-js/dist/._cors.d.mts.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.d.mts.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.mjs b/node_modules/@supabase/supabase-js/dist/._cors.mjs
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.mjs differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._cors.mjs.map b/node_modules/@supabase/supabase-js/dist/._cors.mjs.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._cors.mjs.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.cjs b/node_modules/@supabase/supabase-js/dist/._index.cjs
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.cjs differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.cjs.map b/node_modules/@supabase/supabase-js/dist/._index.cjs.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.cjs.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.d.cts b/node_modules/@supabase/supabase-js/dist/._index.d.cts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.d.cts differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.d.cts.map b/node_modules/@supabase/supabase-js/dist/._index.d.cts.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.d.cts.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.d.mts b/node_modules/@supabase/supabase-js/dist/._index.d.mts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.d.mts differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.d.mts.map b/node_modules/@supabase/supabase-js/dist/._index.d.mts.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.d.mts.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.mjs b/node_modules/@supabase/supabase-js/dist/._index.mjs
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.mjs differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._index.mjs.map b/node_modules/@supabase/supabase-js/dist/._index.mjs.map
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._index.mjs.map differ
+diff --git a/node_modules/@supabase/supabase-js/dist/._umd b/node_modules/@supabase/supabase-js/dist/._umd
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/._umd differ
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.cjs b/node_modules/@supabase/supabase-js/dist/cors.cjs
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.cjs.map b/node_modules/@supabase/supabase-js/dist/cors.cjs.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.d.cts b/node_modules/@supabase/supabase-js/dist/cors.d.cts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.d.cts.map b/node_modules/@supabase/supabase-js/dist/cors.d.cts.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.d.mts b/node_modules/@supabase/supabase-js/dist/cors.d.mts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.d.mts.map b/node_modules/@supabase/supabase-js/dist/cors.d.mts.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.mjs b/node_modules/@supabase/supabase-js/dist/cors.mjs
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/cors.mjs.map b/node_modules/@supabase/supabase-js/dist/cors.mjs.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.cjs b/node_modules/@supabase/supabase-js/dist/index.cjs
+old mode 100644
+new mode 100755
+index eaaca64..0b4e9fd
+--- a/node_modules/@supabase/supabase-js/dist/index.cjs
++++ b/node_modules/@supabase/supabase-js/dist/index.cjs
+@@ -64,11 +64,8 @@ function __awaiter(thisArg, _arguments, P, generator) {
+ let otelModulePromise = null;
+ const OTEL_PKG = "@opentelemetry/api";
+ function loadOtel() {
+-	if (otelModulePromise === null) otelModulePromise = import(
+-		/* webpackIgnore: true */
+-		/* @vite-ignore */
+-		OTEL_PKG
+-).catch(() => null);
++	// React Native / Hermes 호환: dynamic import 제거. OTel 비활성.
++	if (otelModulePromise === null) otelModulePromise = Promise.resolve(null);
+ 	return otelModulePromise;
+ }
+ /**
+diff --git a/node_modules/@supabase/supabase-js/dist/index.cjs.map b/node_modules/@supabase/supabase-js/dist/index.cjs.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.d.cts b/node_modules/@supabase/supabase-js/dist/index.d.cts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.d.cts.map b/node_modules/@supabase/supabase-js/dist/index.d.cts.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.d.mts b/node_modules/@supabase/supabase-js/dist/index.d.mts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.d.mts.map b/node_modules/@supabase/supabase-js/dist/index.d.mts.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/index.mjs b/node_modules/@supabase/supabase-js/dist/index.mjs
+old mode 100644
+new mode 100755
+index a34e281..b615bf1
+--- a/node_modules/@supabase/supabase-js/dist/index.mjs
++++ b/node_modules/@supabase/supabase-js/dist/index.mjs
+@@ -68,11 +68,8 @@ function __awaiter(thisArg, _arguments, P, generator) {
+ let otelModulePromise = null;
+ const OTEL_PKG = "@opentelemetry/api";
+ function loadOtel() {
+-	if (otelModulePromise === null) otelModulePromise = import(
+-		/* webpackIgnore: true */
+-		/* @vite-ignore */
+-		OTEL_PKG
+-).catch(() => null);
++	// React Native / Hermes 호환: dynamic import 제거. OTel 비활성.
++	if (otelModulePromise === null) otelModulePromise = Promise.resolve(null);
+ 	return otelModulePromise;
+ }
+ /**
+diff --git a/node_modules/@supabase/supabase-js/dist/index.mjs.map b/node_modules/@supabase/supabase-js/dist/index.mjs.map
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/dist/umd/._supabase.js b/node_modules/@supabase/supabase-js/dist/umd/._supabase.js
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/dist/umd/._supabase.js differ
+diff --git a/node_modules/@supabase/supabase-js/dist/umd/supabase.js b/node_modules/@supabase/supabase-js/dist/umd/supabase.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/._SupabaseClient.ts b/node_modules/@supabase/supabase-js/src/._SupabaseClient.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/._SupabaseClient.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/._cors.ts b/node_modules/@supabase/supabase-js/src/._cors.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/._cors.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/._index.ts b/node_modules/@supabase/supabase-js/src/._index.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/._index.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/._lib b/node_modules/@supabase/supabase-js/src/._lib
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/._lib differ
+diff --git a/node_modules/@supabase/supabase-js/src/SupabaseClient.ts b/node_modules/@supabase/supabase-js/src/SupabaseClient.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/cors.ts b/node_modules/@supabase/supabase-js/src/cors.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/index.ts b/node_modules/@supabase/supabase-js/src/index.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._SupabaseAuthClient.ts b/node_modules/@supabase/supabase-js/src/lib/._SupabaseAuthClient.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._SupabaseAuthClient.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._constants.ts b/node_modules/@supabase/supabase-js/src/lib/._constants.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._constants.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._fetch.ts b/node_modules/@supabase/supabase-js/src/lib/._fetch.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._fetch.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._helpers.ts b/node_modules/@supabase/supabase-js/src/lib/._helpers.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._helpers.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._rest b/node_modules/@supabase/supabase-js/src/lib/._rest
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._rest differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._types.ts b/node_modules/@supabase/supabase-js/src/lib/._types.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._types.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/._version.ts b/node_modules/@supabase/supabase-js/src/lib/._version.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/._version.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/SupabaseAuthClient.ts b/node_modules/@supabase/supabase-js/src/lib/SupabaseAuthClient.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/constants.ts b/node_modules/@supabase/supabase-js/src/lib/constants.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/fetch.ts b/node_modules/@supabase/supabase-js/src/lib/fetch.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/helpers.ts b/node_modules/@supabase/supabase-js/src/lib/helpers.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/._types b/node_modules/@supabase/supabase-js/src/lib/rest/._types
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/rest/._types differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/types/._common b/node_modules/@supabase/supabase-js/src/lib/rest/types/._common
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/rest/types/._common differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._common.ts b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._common.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._common.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._rpc.ts b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._rpc.ts
+new file mode 100755
+index 0000000..0edf074
+Binary files /dev/null and b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/._rpc.ts differ
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/types/common/common.ts b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/common.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/rest/types/common/rpc.ts b/node_modules/@supabase/supabase-js/src/lib/rest/types/common/rpc.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/types.ts b/node_modules/@supabase/supabase-js/src/lib/types.ts
+old mode 100644
+new mode 100755
+diff --git a/node_modules/@supabase/supabase-js/src/lib/version.ts b/node_modules/@supabase/supabase-js/src/lib/version.ts
+old mode 100644
+new mode 100755
