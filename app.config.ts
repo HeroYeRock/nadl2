@@ -9,6 +9,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: "0.1.0",
   orientation: "portrait",
   userInterfaceStyle: "light",
+  // Hermes 가 supabase-js 의 dynamic import 를 컴파일 못 해서 JSC 사용
+  jsEngine: "jsc",
   icon: "./assets/icon.png",
   splash: {
     image: "./assets/splash-icon.png",
