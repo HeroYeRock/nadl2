@@ -20,6 +20,7 @@
     "expo-location": "^55.1.10",
     "expo-media-library": "latest",
     "expo-router": "latest",
+    "expo-web-browser": "^55.0.16",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-native": "0.83.6",
