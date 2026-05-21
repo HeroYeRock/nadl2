@@ -1,4 +1,5 @@
 import { Platform, StyleSheet, Text, View } from "react-native";
+import WebView from "react-native-webview";
 import { Colors } from "@/constants/colors";
 import type { Place, SlotItem } from "@/types/trip";
 import { haversineKm, type TravelMode } from "@/services/maps";
@@ -85,14 +86,6 @@ function buildEmbedUrl(props: Props): string {
 }
 
 export function EmbedMap(props: Props) {
-  if (Platform.OS !== "web") {
-    return (
-      <View style={styles.fallback}>
-        <Text style={styles.fallbackText}>지도는 웹에서만 표시됩니다</Text>
-      </View>
-    );
-  }
-
   if (!MAPS_KEY) {
     return (
       <View style={styles.fallback}>
@@ -105,20 +98,34 @@ export function EmbedMap(props: Props) {
 
   const url = buildEmbedUrl(props);
 
-  // RN Web 에서 iframe 직접 렌더
-  const Iframe: any = "iframe";
+  if (Platform.OS === "web") {
+    const Iframe: any = "iframe";
+    return (
+      <Iframe
+        src={url}
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "0",
+          display: "block",
+        }}
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+    );
+  }
+
+  // 네이티브 (iOS / Android) → WebView 로 동일한 embed URL 로드
   return (
-    <Iframe
-      src={url}
-      style={{
-        width: "100%",
-        height: "100%",
-        border: "0",
-        display: "block",
-      }}
-      allowFullScreen
-      loading="lazy"
-      referrerPolicy="no-referrer-when-downgrade"
+    <WebView
+      source={{ uri: url }}
+      style={{ flex: 1 }}
+      originWhitelist={["https://*", "http://*"]}
+      javaScriptEnabled
+      domStorageEnabled
+      allowsBackForwardNavigationGestures={false}
+      androidLayerType="hardware"
     />
   );
 }
