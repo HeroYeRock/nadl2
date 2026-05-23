@@ -40,6 +40,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     output: "single",
     favicon: "./assets/favicon.png",
   },
+  updates: {
+    url: "https://u.expo.dev/5064239d-afee-4aa4-8802-2c4fd4561473",
+  },
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   plugins: [
     "expo-router",
     [
