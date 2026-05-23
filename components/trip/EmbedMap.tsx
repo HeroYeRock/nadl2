@@ -42,12 +42,10 @@ function buildEmbedUrl(props: Props): string {
     const params = new URLSearchParams({
       key: MAPS_KEY,
       origin: `${origin.lat},${origin.lng}`,
-      destination: `${dest.lat},${dest.lng}`,
+      destination: dest.placeId ? `place_id:${dest.placeId}` : `${dest.lat},${dest.lng}`,
       mode: travelMode,
       language: "ko",
     });
-    // destination_place_id 를 같이 넘기면 좌표 대신 장소명을 라벨로 보여줌
-    if (dest.placeId) params.set("destination_place_id", dest.placeId);
     return `${base}/directions?${params.toString()}`;
   }
 
@@ -74,13 +72,11 @@ function buildEmbedUrl(props: Props): string {
 
   const params = new URLSearchParams({
     key: MAPS_KEY,
-    origin: `${first.lat},${first.lng}`,
-    destination: `${last.lat},${last.lng}`,
+    origin: first.placeId ? `place_id:${first.placeId}` : `${first.lat},${first.lng}`,
+    destination: last.placeId ? `place_id:${last.placeId}` : `${last.lat},${last.lng}`,
     mode: "walking",
     language: "ko",
   });
-  if (first.placeId) params.set("origin_place_id", first.placeId);
-  if (last.placeId) params.set("destination_place_id", last.placeId);
   if (waypoints) params.set("waypoints", waypoints);
   return `${base}/directions?${params.toString()}`;
 }
