@@ -43,9 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: {
     url: "https://u.expo.dev/5064239d-afee-4aa4-8802-2c4fd4561473",
   },
-  runtimeVersion: {
-    policy: "appVersion",
-  },
+  runtimeVersion: "1.0.0",
   plugins: [
     "expo-router",
     [
