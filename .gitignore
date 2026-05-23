@@ -5,7 +5,7 @@ node_modules/
 .npm/
 Library/
 .expo/
-dist/
+# dist/
 .vercel/
 api/config.local.php
 supabase/.branches
