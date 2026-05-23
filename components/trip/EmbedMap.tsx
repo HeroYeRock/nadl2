@@ -72,8 +72,8 @@ function buildEmbedUrl(props: Props): string {
 
   const params = new URLSearchParams({
     key: MAPS_KEY,
-    origin: first.placeId ? `place_id:${first.placeId}` : `${first.lat},${first.lng}`,
-    destination: last.placeId ? `place_id:${last.placeId}` : `${last.lat},${last.lng}`,
+    origin: `${first.lat},${first.lng}`,
+    destination: `${last.lat},${last.lng}`,
     mode: "walking",
     language: "ko",
   });
