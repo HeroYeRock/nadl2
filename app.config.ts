@@ -25,7 +25,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: "com.caosjhj.nadl2",
-    jsEngine: "jsc",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#5BB8F5",
