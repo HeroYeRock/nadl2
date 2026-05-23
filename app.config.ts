@@ -53,10 +53,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-build-properties",
       {
         android: {
-          newArchEnabled: true,
           extraProperties: {
             hermesV1Enabled: "true",
-            "hermesEnabled": "true",
           },
         },
       },
