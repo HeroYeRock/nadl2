@@ -11,15 +11,39 @@ interface Props {
   selectedSlot?: SlotItem | null;
   origin?: { lat: number; lng: number } | null;
   travelMode?: TravelMode;
+  /** 여행지 도시명 — 좌표 없을 때 검색 기본 뷰로 사용 */
+  destination?: string;
 }
 
 const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? "";
+
+function hasValidCoords(place: Pick<Place, "lat" | "lng">): boolean {
+  return !!(place.lat && place.lng);
+}
+
+function cityFallbackUrl(destination?: string): string {
+  const base = "https://www.google.com/maps/embed/v1";
+  if (destination) {
+    const params = new URLSearchParams({
+      key: MAPS_KEY,
+      q: destination,
+      language: "ko",
+    });
+    return `${base}/search?${params.toString()}`;
+  }
+  const params = new URLSearchParams({
+    key: MAPS_KEY,
+    center: "35.682,139.766",
+    zoom: "6",
+    language: "ko",
+  });
+  return `${base}/view?${params.toString()}`;
+}
 
 function placeUrl(place: Pick<Place, "lat" | "lng" | "placeId" | "name">): string {
   const base = "https://www.google.com/maps/embed/v1";
   const params = new URLSearchParams({
     key: MAPS_KEY,
-    // placeId 있으면 그걸 우선 사용 → 좌표 대신 실제 장소명 표시
     q: place.placeId ? `place_id:${place.placeId}` : `${place.lat},${place.lng}`,
     language: "ko",
   });
@@ -27,7 +51,7 @@ function placeUrl(place: Pick<Place, "lat" | "lng" | "placeId" | "name">): strin
 }
 
 function buildEmbedUrl(props: Props): string {
-  const { mode, places, selectedSlot, origin, travelMode = "transit" } = props;
+  const { mode, places, selectedSlot, origin, travelMode = "transit", destination } = props;
   const base = "https://www.google.com/maps/embed/v1";
 
   if (mode === "directions" && selectedSlot?.place) {
@@ -50,23 +74,23 @@ function buildEmbedUrl(props: Props): string {
   }
 
   if (places.length === 0) {
-    const params = new URLSearchParams({
-      key: MAPS_KEY,
-      center: "35.682,139.766",
-      zoom: "6",
-      language: "ko",
-    });
-    return `${base}/view?${params.toString()}`;
+    return cityFallbackUrl(destination);
   }
 
   if (places.length === 1) {
+    if (!hasValidCoords(places[0])) return cityFallbackUrl(destination);
     return placeUrl(places[0]);
   }
 
-  // 여러 장소면 directions 모드로 waypoints 사용해서 경로 표시
-  const first = places[0];
-  const last = places[places.length - 1];
-  const waypoints = places.slice(1, -1)
+  // 여러 장소: 유효한 좌표가 있는 장소만 필터링
+  const validPlaces = places.filter(hasValidCoords);
+  if (validPlaces.length < 2) {
+    return cityFallbackUrl(destination);
+  }
+
+  const first = validPlaces[0];
+  const last = validPlaces[validPlaces.length - 1];
+  const waypoints = validPlaces.slice(1, -1)
     .map((p) => (p.placeId ? `place_id:${p.placeId}` : `${p.lat},${p.lng}`))
     .join("|");
 
@@ -112,7 +136,6 @@ export function EmbedMap(props: Props) {
     );
   }
 
-  // 네이티브 (iOS / Android) → WebView 로 동일한 embed URL 로드
   return (
     <WebView
       source={{ uri: url }}

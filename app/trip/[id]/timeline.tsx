@@ -369,6 +369,7 @@ export default function TimelineScreen() {
               selectedSlot={focusedSlotItem}
               origin={origin}
               travelMode={directionsMode}
+              destination={trip.destination}
             />
             {inDirectionsMode ? (
               <Pressable
