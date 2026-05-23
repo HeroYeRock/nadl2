@@ -14,12 +14,7 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk",
-        "resourceClass": "large"
-      },
-      "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g",
-        "NODE_OPTIONS": "--max-old-space-size=8192"
+        "buildType": "apk"
       }
     },
     "production": {
