@@ -49,6 +49,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           "현위치 기반 길찾기와 거리 표시를 위해 위치 정보가 필요해요.",
       },
     ],
+    [
+      "expo-build-properties",
+      {
+        android: {
+          extraProperties: {
+            hermesV1Enabled: "true",
+          },
+        },
+      },
+    ],
   ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
