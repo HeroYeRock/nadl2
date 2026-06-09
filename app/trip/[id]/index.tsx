@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
-import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TripMap } from "@/components/map/TripMap";
@@ -59,7 +58,21 @@ export default function TripDetailScreen() {
   }
 
   async function saveImage() {
+    if (Platform.OS === "web") {
+      try {
+        const uri = await captureRef(timelineRef, { format: "png", quality: 1 });
+        const link = document.createElement("a");
+        link.href = uri;
+        link.download = `${trip?.title ?? "nadl2"}-${activeDay}일차.png`;
+        link.click();
+      } catch {
+        Alert.alert("저장 실패", "이미지를 저장하지 못했어요.");
+      }
+      return;
+    }
     try {
+      // 네이티브에서만 expo-media-library 동적 로드 (웹에는 네이티브 모듈이 없음)
+      const MediaLibrary = await import("expo-media-library");
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
         Alert.alert("권한이 필요해요", "일정 이미지를 저장하려면 사진 접근 권한이 필요합니다.");
