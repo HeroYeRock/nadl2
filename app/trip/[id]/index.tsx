@@ -39,7 +39,7 @@ export default function TripDetailScreen() {
   const timelineRef = useRef<View>(null);
   const [activeDay, setActiveDay] = useState(1);
   const [customOpen, setCustomOpen] = useState(false);
-  const { trip, stats, removePlace } = useTrip(id);
+  const { trip, stats, removePlace, deleteSlot, setSlotTime } = useTrip(id);
   const ai = useAIRecommend(trip);
 
   const dayPlan = trip?.days.find((day) => day.day === activeDay);
@@ -217,6 +217,8 @@ export default function TripDetailScreen() {
                 pinColor={PIN_COLORS[index % PIN_COLORS.length]}
                 onAdd={() => goAddPlace(slot.slot)}
                 onRemove={() => removePlace(trip.id, activeDay, slot.slot)}
+                onChangeTime={(time) => setSlotTime(trip.id, activeDay, slot.slot, time)}
+                onDelete={() => deleteSlot(trip.id, activeDay, slot.slot)}
                 blocked={!inWindow}
                 blockedReason={reason}
               />

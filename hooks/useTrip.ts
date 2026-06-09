@@ -6,6 +6,8 @@ export function useTrip(id?: string | string[]) {
   const tripId = Array.isArray(id) ? id[0] : id;
   const trip = useTripStore((state) => state.trips.find((item) => item.id === tripId));
   const removePlace = useTripStore((state) => state.removePlace);
+  const deleteSlot = useTripStore((state) => state.deleteSlot);
+  const setSlotTime = useTripStore((state) => state.setSlotTime);
 
   const stats = useMemo(() => {
     if (!trip) return { totalSlots: 0, filledSlots: 0, progress: 0 };
@@ -21,5 +23,7 @@ export function useTrip(id?: string | string[]) {
     trip,
     stats,
     removePlace,
+    deleteSlot,
+    setSlotTime,
   };
 }

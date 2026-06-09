@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Colors } from "@/constants/colors";
 import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
@@ -11,8 +12,75 @@ interface Props {
   pinColor: string;
   onAdd: () => void;
   onRemove: () => void;
+  onChangeTime?: (time: string) => void;
+  onDelete?: () => void;
   blocked?: boolean;
   blockedReason?: string;
+}
+
+function normalizeTimeInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function isValidTime(value: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+/** 탭하면 시각을 직접 편집할 수 있는 타임라인 좌측 시간 표시 */
+function EditableTime({
+  time,
+  onChangeTime,
+  blocked,
+}: {
+  time: string;
+  onChangeTime?: (time: string) => void;
+  blocked?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(time);
+
+  if (!onChangeTime) {
+    return <Text style={[styles.time, blocked && styles.timeBlocked]}>{time}</Text>;
+  }
+
+  function commit() {
+    setEditing(false);
+    if (isValidTime(draft) && draft !== time) onChangeTime?.(draft);
+    else setDraft(time);
+  }
+
+  if (editing) {
+    return (
+      <TextInput
+        value={draft}
+        onChangeText={(t) => setDraft(normalizeTimeInput(t))}
+        onBlur={commit}
+        onSubmitEditing={commit}
+        autoFocus
+        keyboardType="numbers-and-punctuation"
+        maxLength={5}
+        placeholder="HH:MM"
+        placeholderTextColor={Colors.textThird}
+        style={styles.timeEdit}
+      />
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={() => {
+        setDraft(time);
+        setEditing(true);
+      }}
+      hitSlop={6}
+      style={styles.timeTapWrap}
+    >
+      <Text style={[styles.time, blocked && styles.timeBlocked]}>{time}</Text>
+      <Ionicons name="pencil" size={8} color={Colors.textThird} />
+    </Pressable>
+  );
 }
 
 export function TimelineItem({
@@ -21,17 +89,20 @@ export function TimelineItem({
   pinColor,
   onAdd,
   onRemove,
+  onChangeTime,
+  onDelete,
   blocked,
   blockedReason,
 }: Props) {
   const info = getSlotInfo(slot.slot);
-  const badgeLabel = isCustomSlotId(slot.slot) && slot.customLabel ? slot.customLabel : info.label;
+  const isCustom = isCustomSlotId(slot.slot);
+  const badgeLabel = isCustom && slot.customLabel ? slot.customLabel : info.label;
 
   if (blocked && !slot.place) {
     return (
       <Animated.View entering={FadeInDown.duration(220)} style={styles.row}>
         <View style={styles.spine}>
-          <Text style={[styles.time, styles.timeBlocked]}>{slot.time}</Text>
+          <EditableTime time={slot.time} onChangeTime={onChangeTime} blocked />
           <View style={[styles.dot, styles.dotBlocked]} />
           {!isLast ? <View style={styles.line} /> : null}
         </View>
@@ -42,6 +113,11 @@ export function TimelineItem({
               <Text style={styles.blockedText}>
                 {blockedReason ?? "비행기 이동 시간대"}
               </Text>
+              {isCustom && onDelete ? (
+                <Pressable onPress={onDelete} hitSlop={8} style={styles.deleteInline}>
+                  <Ionicons name="trash-outline" size={14} color={Colors.error} />
+                </Pressable>
+              ) : null}
             </View>
           </View>
         </View>
@@ -52,16 +128,24 @@ export function TimelineItem({
   return (
     <Animated.View entering={FadeInDown.duration(220)} style={styles.row}>
       <View style={styles.spine}>
-        <Text style={styles.time}>{slot.time}</Text>
+        <EditableTime time={slot.time} onChangeTime={onChangeTime} />
         <View style={[styles.dot, { backgroundColor: slot.place ? pinColor : Colors.borderLight }]} />
         {!isLast ? <View style={styles.line} /> : null}
       </View>
 
       <Pressable onPress={slot.place ? undefined : onAdd} style={styles.cardWrap}>
         <View style={styles.card}>
-          <View style={[styles.badge, { backgroundColor: info.bgColor }]}>
-            <Ionicons name={info.icon as any} size={12} color={info.color} />
-            <Text style={[styles.badgeText, { color: info.color }]}>{badgeLabel}</Text>
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, { backgroundColor: info.bgColor }]}>
+              <Ionicons name={info.icon as any} size={12} color={info.color} />
+              <Text style={[styles.badgeText, { color: info.color }]}>{badgeLabel}</Text>
+            </View>
+            {isCustom && onDelete ? (
+              <Pressable onPress={onDelete} hitSlop={8} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={15} color={Colors.error} />
+                <Text style={styles.deleteText}>삭제</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {slot.place ? (
@@ -83,9 +167,11 @@ export function TimelineItem({
                   {slot.durationMin ? <Text style={styles.duration}>약 {slot.durationMin}분</Text> : null}
                 </View>
               </View>
-              <Pressable onPress={onRemove} style={styles.removeButton}>
-                <Ionicons name="close" size={16} color={Colors.textThird} />
-              </Pressable>
+              {!isCustom ? (
+                <Pressable onPress={onRemove} style={styles.removeButton}>
+                  <Ionicons name="close" size={16} color={Colors.textThird} />
+                </Pressable>
+              ) : null}
             </View>
           ) : (
             <View style={styles.emptyRow}>
@@ -115,6 +201,22 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Colors.textSecond,
     marginBottom: 5,
+  },
+  timeTapWrap: {
+    alignItems: "center",
+    gap: 1,
+    marginBottom: 3,
+  },
+  timeEdit: {
+    width: 44,
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.primary,
+    textAlign: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.primary,
+    paddingVertical: 0,
+    marginBottom: 4,
   },
   dot: {
     width: 13,
@@ -149,6 +251,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -157,7 +265,24 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingVertical: 3,
     paddingHorizontal: 8,
-    marginBottom: 8,
+  },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "#FFE8E8",
+  },
+  deleteText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.error,
+  },
+  deleteInline: {
+    marginLeft: "auto",
+    padding: 2,
   },
   badgeText: {
     fontSize: 11,

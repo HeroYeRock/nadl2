@@ -18,6 +18,8 @@ interface TripStore {
   getTrip: (id: string) => Trip | undefined;
   addPlace: (tripId: string, day: number, slot: SlotItem) => Promise<void>;
   removePlace: (tripId: string, day: number, slotId: string) => Promise<void>;
+  deleteSlot: (tripId: string, day: number, slotId: string) => Promise<void>;
+  setSlotTime: (tripId: string, day: number, slotId: string, time: string) => Promise<void>;
   updateSlot: (tripId: string, day: number, slot: SlotItem) => Promise<void>;
   fillAISlot: (tripId: string, day: number, slot: SlotItem) => Promise<void>;
   clearLocal: () => void;
@@ -241,6 +243,46 @@ export const useTripStore = create<TripStore>()((set, get) => ({
                 : slot,
             ),
           };
+        }),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    set({ trips: next });
+    await persistLocal(next);
+    const updated = next.find((t) => t.id === tripId);
+    if (updated) await upsertCloud(updated);
+  },
+
+  deleteSlot: async (tripId, day, slotId) => {
+    const next = get().trips.map((trip) => {
+      if (trip.id !== tripId) return trip;
+      return {
+        ...trip,
+        days: trip.days.map((dayPlan) =>
+          dayPlan.day !== day
+            ? dayPlan
+            : { ...dayPlan, slots: dayPlan.slots.filter((s) => s.slot !== slotId) },
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    set({ trips: next });
+    await persistLocal(next);
+    const updated = next.find((t) => t.id === tripId);
+    if (updated) await upsertCloud(updated);
+  },
+
+  setSlotTime: async (tripId, day, slotId, time) => {
+    const next = get().trips.map((trip) => {
+      if (trip.id !== tripId) return trip;
+      return {
+        ...trip,
+        days: trip.days.map((dayPlan) => {
+          if (dayPlan.day !== day) return dayPlan;
+          const slots = dayPlan.slots
+            .map((s) => (s.slot === slotId ? { ...s, time } : s))
+            .sort((a, b) => a.time.localeCompare(b.time));
+          return { ...dayPlan, slots };
         }),
         updatedAt: new Date().toISOString(),
       };
