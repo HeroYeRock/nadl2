@@ -13,6 +13,7 @@ import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
 import { getAirportInfo } from "@/services/airports";
+import { buildShareUrl } from "@/services/share";
 import { isSlotInFlightWindow } from "@/services/tripHelpers";
 import type { Place, SlotId } from "@/types/trip";
 
@@ -87,14 +88,30 @@ export default function TripDetailScreen() {
   }
 
   async function shareTrip() {
-    if (!trip || !dayPlan) return;
-    const text = dayPlan.slots
-      .filter((slot) => slot.place)
-      .map((slot) => `${slot.time} ${slot.place?.name}`)
-      .join("\n");
-    await Share.share({
-      message: `${trip.title} ${activeDay}일차\n${text || "아직 추가된 장소가 없어요."}`,
-    });
+    if (!trip) return;
+    const origin =
+      Platform.OS === "web" && typeof window !== "undefined"
+        ? window.location.origin
+        : "https://nadl2.vercel.app";
+    const url = buildShareUrl(origin, trip);
+    const message = `${trip.title} 일정 보기 (지도 포함)`;
+
+    if (Platform.OS === "web" && typeof navigator !== "undefined") {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: trip.title, text: message, url });
+          return;
+        }
+        await navigator.clipboard.writeText(url);
+        Alert.alert("링크 복사됨", "공유 링크를 클립보드에 복사했어요. 붙여넣어 공유하세요.");
+        return;
+      } catch {
+        // 사용자가 공유 취소했거나 권한 없음 → 조용히 무시
+        return;
+      }
+    }
+
+    await Share.share({ message: `${message}\n${url}`, url });
   }
 
   function goAddPlace(slot?: string) {
