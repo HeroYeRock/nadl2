@@ -1,14 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmbedMap } from "@/components/trip/EmbedMap";
+import { PlaceInsights } from "@/components/trip/PlaceInsights";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP } from "@/constants/regions";
 import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
+import { directionsUrl, placeMapsUrl } from "@/services/maps";
 import { decodeTripFromShare, fetchSharedTrip } from "@/services/share";
 import type { Place, Trip } from "@/types/trip";
+
+function openExternal(url: string) {
+  Linking.openURL(url).catch(() => {});
+}
 
 function readHashData(): string | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
@@ -137,7 +143,33 @@ export default function SharePage() {
                         {slot.place.address}
                       </Text>
                     ) : null}
-                    {slot.place?.rating ? <Text style={styles.rating}>★ {slot.place.rating}</Text> : null}
+                    {slot.place?.rating ? (
+                      <Text style={styles.rating}>
+                        ★ {slot.place.rating}
+                        {slot.place.userRatingsTotal
+                          ? ` (${slot.place.userRatingsTotal.toLocaleString()})`
+                          : ""}
+                      </Text>
+                    ) : null}
+                    {slot.place ? <PlaceInsights place={slot.place} /> : null}
+                    {slot.place ? (
+                      <View style={styles.btnRow}>
+                        <Pressable
+                          onPress={() => openExternal(placeMapsUrl(slot.place!))}
+                          style={styles.btnSecondary}
+                        >
+                          <Ionicons name="map-outline" size={14} color={Colors.primary} />
+                          <Text style={styles.btnSecondaryText}>지도에서 보기</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => openExternal(directionsUrl(slot.place!, "transit"))}
+                          style={styles.btnPrimary}
+                        >
+                          <Ionicons name="navigate-outline" size={14} color="white" />
+                          <Text style={styles.btnPrimaryText}>길찾기</Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
                   </View>
                 </View>
               );
@@ -247,6 +279,31 @@ const styles = StyleSheet.create({
   placeName: { fontSize: 15, fontWeight: "800", color: Colors.textPrimary },
   placeAddress: { fontSize: 12, color: Colors.textSecond, marginTop: 3 },
   rating: { fontSize: 11, color: Colors.warning, fontWeight: "800", marginTop: 6 },
+  btnRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+  btnSecondary: {
+    flex: 1,
+    height: 38,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+  },
+  btnSecondaryText: { fontSize: 12, fontWeight: "800", color: Colors.primary },
+  btnPrimary: {
+    flex: 1,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+  },
+  btnPrimaryText: { fontSize: 12, fontWeight: "800", color: "white" },
   footer: { alignItems: "center", paddingTop: 24 },
   footerText: { fontSize: 12, color: Colors.textThird, fontWeight: "700" },
 });

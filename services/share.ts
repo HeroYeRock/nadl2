@@ -1,14 +1,18 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import LZString from "lz-string";
 import { supabase } from "@/services/supabase";
 import type { Place, SlotItem, Trip } from "@/types/trip";
 
 /**
- * 공유 링크용 trip 스냅샷 인코딩/디코딩.
+ * 공유 링크용 trip 스냅샷 인코딩/디코딩 + 동기화.
  *
  * 기본 방식: 스냅샷을 Supabase `shared_trips` 에 저장하고 짧은 코드로 조회한다.
  *   → https://.../share?id=aB3kF9Qz
  * 폴백 방식: 저장 실패(오프라인 등) 시 데이터를 압축해 URL 해시(#)에 담는다.
  *   → https://.../share#d=<압축 데이터> (길지만 서버 없이 동작)
+ *
+ * 동기화: trip 별 공유 코드를 로컬에 매핑해 두고(`nadl2-share-map`),
+ *   일정을 수정하면 같은 코드의 스냅샷을 덮어써 공유 링크도 최신 상태를 유지한다.
  *
  * 용량 절감을 위해 표시에 꼭 필요한 필드만 짧은 키로 직렬화한다.
  */
@@ -19,7 +23,13 @@ interface SlimPlace {
   la: number; // lat
   ln: number; // lng
   ra?: number; // rating
+  rt?: number; // userRatingsTotal
   pi?: string; // placeId
+  su?: string; // summary
+  rm?: string[]; // recommendedMenus
+  hl?: string[]; // highlights
+  pr?: string; // priceRange
+  pl?: 1 | 2 | 3 | 4; // priceLevel
 }
 
 interface SlimSlot {
@@ -49,7 +59,13 @@ function slimPlace(place: Place): SlimPlace {
   const out: SlimPlace = { n: place.name, la: place.lat, ln: place.lng };
   if (place.address) out.ad = place.address;
   if (place.rating) out.ra = place.rating;
+  if (place.userRatingsTotal) out.rt = place.userRatingsTotal;
   if (place.placeId) out.pi = place.placeId;
+  if (place.summary) out.su = place.summary;
+  if (place.recommendedMenus?.length) out.rm = place.recommendedMenus;
+  if (place.highlights?.length) out.hl = place.highlights;
+  if (place.priceRange) out.pr = place.priceRange;
+  if (place.priceLevel) out.pl = place.priceLevel;
   return out;
 }
 
@@ -63,6 +79,12 @@ function fatPlace(s: SlimPlace): Place {
     lng: s.ln,
     category: "point_of_interest",
     rating: s.ra,
+    userRatingsTotal: s.rt,
+    summary: s.su,
+    recommendedMenus: s.rm,
+    highlights: s.hl,
+    priceRange: s.pr,
+    priceLevel: s.pl,
   };
 }
 
@@ -145,27 +167,59 @@ function randomShareId(): string {
   return id;
 }
 
-// 같은 일정을 연속으로 공유할 때 중복 row 생성 방지 (trip.id:updatedAt → 짧은 URL)
-const shortUrlCache = new Map<string, string>();
+// trip.id → 공유 코드 매핑. 일정 수정 시 같은 코드의 스냅샷을 갱신하기 위함.
+const SHARE_MAP_KEY = "nadl2-share-map";
+
+async function loadShareMap(): Promise<Record<string, string>> {
+  try {
+    const raw = await AsyncStorage.getItem(SHARE_MAP_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+async function rememberShareId(tripId: string, shareId: string): Promise<void> {
+  try {
+    const map = await loadShareMap();
+    map[tripId] = shareId;
+    await AsyncStorage.setItem(SHARE_MAP_KEY, JSON.stringify(map));
+  } catch {}
+}
+
+/** 이 trip 이 이미 공유된 적이 있으면 그 공유 코드를 반환 */
+export async function getShareIdForTrip(tripId: string): Promise<string | null> {
+  const map = await loadShareMap();
+  return map[tripId] ?? null;
+}
 
 /**
  * 짧은 공유 URL 생성. 스냅샷을 Supabase 에 저장하고 코드만 담은 URL 을 돌려준다.
+ * 이미 공유한 trip 이면 같은 코드의 스냅샷을 최신 데이터로 덮어쓴다(=재공유 시 동기화).
  * 저장에 실패하면 기존 방식의 긴 해시 URL 로 폴백한다.
  */
 export async function createShareUrl(origin: string, trip: Trip): Promise<string> {
-  const cacheKey = `${trip.id}:${trip.updatedAt}`;
-  const cached = shortUrlCache.get(cacheKey);
-  if (cached) return cached;
-
   const data = tripToSlim(trip);
+  const now = new Date().toISOString();
+
+  const existing = await getShareIdForTrip(trip.id);
+  if (existing) {
+    const { error } = await supabase
+      .from("shared_trips")
+      .upsert({ id: existing, data, updated_at: now });
+    if (!error) return `${origin}/share?id=${existing}`;
+    console.warn("[Nadl2 share]", error.message);
+    // 덮어쓰기 실패 시 새 코드 생성으로 폴백
+  }
+
   // id 충돌(unique violation) 시 새 id 로 재시도
   for (let attempt = 0; attempt < 3; attempt++) {
     const id = randomShareId();
     const { error } = await supabase.from("shared_trips").insert({ id, data });
     if (!error) {
-      const url = `${origin}/share?id=${id}`;
-      shortUrlCache.set(cacheKey, url);
-      return url;
+      await rememberShareId(trip.id, id);
+      return `${origin}/share?id=${id}`;
     }
     if (error.code !== "23505") {
       console.warn("[Nadl2 share]", error.message);
@@ -173,6 +227,20 @@ export async function createShareUrl(origin: string, trip: Trip): Promise<string
     }
   }
   return buildShareUrl(origin, trip);
+}
+
+/**
+ * 일정이 수정되면 호출. 이 trip 을 공유한 적이 있을 때만 공유 스냅샷을 최신화한다.
+ * 공유한 적 없으면 아무 작업도 하지 않는다(네트워크 호출 없음).
+ */
+export async function syncSharedTrip(trip: Trip): Promise<void> {
+  const id = await getShareIdForTrip(trip.id);
+  if (!id) return;
+  const { error } = await supabase
+    .from("shared_trips")
+    .update({ data: tripToSlim(trip), updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) console.warn("[Nadl2 share/sync]", error.message);
 }
 
 /** 짧은 코드로 공유 스냅샷 조회 */
