@@ -94,12 +94,12 @@ export default function TripDetailScreen() {
         ? window.location.origin
         : "https://nadl2.vercel.app";
     const url = await createShareUrl(origin, trip);
-    const message = trip.title;
 
     if (Platform.OS === "web" && typeof navigator !== "undefined") {
       if (navigator.share) {
         try {
-          await navigator.share({ title: trip.title, text: message, url });
+          // URL 만 공유 (본문 텍스트를 붙이지 않아 링크가 깨지지 않게 함)
+          await navigator.share({ url });
           return;
         } catch (e) {
           // 사용자가 공유를 취소한 경우 → 조용히 무시
@@ -114,7 +114,7 @@ export default function TripDetailScreen() {
       return;
     }
 
-    await Share.share({ message: `${message}\n${url}`, url });
+    await Share.share({ message: url, url });
   }
 
   function goAddPlace(slot?: string) {

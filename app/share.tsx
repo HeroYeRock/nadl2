@@ -27,7 +27,9 @@ export default function SharePage() {
   const insets = useSafeAreaInsets();
   const [activeDay, setActiveDay] = useState(1);
   const params = useLocalSearchParams<{ id?: string }>();
-  const shareId = typeof params.id === "string" ? params.id : undefined;
+  // 공유 시 텍스트가 URL 뒤에 붙어 들어오는 경우를 대비해 앞쪽 영숫자 코드만 추출
+  const rawId = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : undefined;
+  const shareId = rawId?.trim().match(/^[A-Za-z0-9]{6,16}/)?.[0];
 
   // 구버전 링크 호환: 해시(#d=)에 데이터가 통째로 들어있는 경우
   const hashTrip = useMemo(() => {
