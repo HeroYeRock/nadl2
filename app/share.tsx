@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmbedMap } from "@/components/trip/EmbedMap";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP } from "@/constants/regions";
 import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
-import { decodeTripFromShare } from "@/services/share";
-import type { Place } from "@/types/trip";
+import { decodeTripFromShare, fetchSharedTrip } from "@/services/share";
+import type { Place, Trip } from "@/types/trip";
 
 function readHashData(): string | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
@@ -19,11 +20,41 @@ function readHashData(): string | null {
 export default function SharePage() {
   const insets = useSafeAreaInsets();
   const [activeDay, setActiveDay] = useState(1);
+  const params = useLocalSearchParams<{ id?: string }>();
+  const shareId = typeof params.id === "string" ? params.id : undefined;
 
-  const trip = useMemo(() => {
+  // 구버전 링크 호환: 해시(#d=)에 데이터가 통째로 들어있는 경우
+  const hashTrip = useMemo(() => {
     const data = readHashData();
     return data ? decodeTripFromShare(data) : null;
   }, []);
+
+  const [fetchedTrip, setFetchedTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(!hashTrip && !!shareId);
+
+  useEffect(() => {
+    if (hashTrip || !shareId) return;
+    let alive = true;
+    fetchSharedTrip(shareId).then((result) => {
+      if (!alive) return;
+      setFetchedTrip(result);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [hashTrip, shareId]);
+
+  const trip = hashTrip ?? fetchedTrip;
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.emptyDesc}>일정을 불러오는 중...</Text>
+      </View>
+    );
+  }
 
   if (!trip) {
     return (

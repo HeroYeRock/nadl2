@@ -13,7 +13,7 @@ import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
 import { getAirportInfo } from "@/services/airports";
-import { buildShareUrl } from "@/services/share";
+import { createShareUrl } from "@/services/share";
 import { isSlotInFlightWindow } from "@/services/tripHelpers";
 import type { Place, SlotId } from "@/types/trip";
 
@@ -93,22 +93,25 @@ export default function TripDetailScreen() {
       Platform.OS === "web" && typeof window !== "undefined"
         ? window.location.origin
         : "https://nadl2.vercel.app";
-    const url = buildShareUrl(origin, trip);
+    const url = await createShareUrl(origin, trip);
     const message = `${trip.title} 일정 보기 (지도 포함)`;
 
     if (Platform.OS === "web" && typeof navigator !== "undefined") {
-      try {
-        if (navigator.share) {
+      if (navigator.share) {
+        try {
           await navigator.share({ title: trip.title, text: message, url });
           return;
+        } catch (e) {
+          // 사용자가 공유를 취소한 경우 → 조용히 무시
+          if ((e as DOMException)?.name === "AbortError") return;
+          // 링크 생성 대기 중 사용자 제스처가 만료된 경우 등 → 클립보드 복사로 폴백
         }
+      }
+      try {
         await navigator.clipboard.writeText(url);
         Alert.alert("링크 복사됨", "공유 링크를 클립보드에 복사했어요. 붙여넣어 공유하세요.");
-        return;
-      } catch {
-        // 사용자가 공유 취소했거나 권한 없음 → 조용히 무시
-        return;
-      }
+      } catch {}
+      return;
     }
 
     await Share.share({ message: `${message}\n${url}`, url });
