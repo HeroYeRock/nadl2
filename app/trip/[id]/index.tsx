@@ -94,7 +94,7 @@ export default function TripDetailScreen() {
         ? window.location.origin
         : "https://nadl2.vercel.app";
     const url = await createShareUrl(origin, trip);
-    const message = `${trip.title} 일정 보기 (지도 포함)`;
+    const message = trip.title;
 
     if (Platform.OS === "web" && typeof navigator !== "undefined") {
       if (navigator.share) {

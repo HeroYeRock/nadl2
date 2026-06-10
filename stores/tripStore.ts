@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { TIME_SLOTS } from "@/constants/timeSlots";
 import { recordPlaceSelection } from "@/services/popularity";
+import { syncSharedTrip } from "@/services/share";
 import { supabase } from "@/services/supabase";
 import { createEmptyTrip } from "@/types/trip";
 import type { NewTripForm, SlotItem, Trip } from "@/types/trip";
@@ -127,6 +128,8 @@ async function currentUserId(): Promise<string | null> {
 }
 
 async function upsertCloud(trip: Trip): Promise<void> {
+  // 공유한 적 있는 trip 이면 공유 스냅샷도 최신화 (로그인 여부와 무관, 공유 안 했으면 no-op)
+  void syncSharedTrip(trip);
   const userId = await currentUserId();
   if (!userId) return;
   const { error } = await supabase
