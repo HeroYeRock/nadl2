@@ -253,19 +253,30 @@ export async function fetchDaysWeather(
   return out;
 }
 
-/** 날씨 출처 라벨: 지난 날짜는 "기록", 평년 추정은 "평년", 그 외 "예보". */
+/** 그 날짜의 실제 예보가 제공되기 시작하는 날(= 날짜 − 16일)을 "M/D" 로. */
+export function forecastAvailableFrom(dateYMD: string): string {
+  const d = parseYMD(dateYMD);
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - FORECAST_MAX_DAYS);
+  return `${from.getMonth() + 1}/${from.getDate()}`;
+}
+
+/** 날씨 출처 라벨: 지난 날짜는 "기록", 16일 너머(평년 추정)는 "미정", 그 외 "예보". */
 export function weatherSourceLabel(w: DayWeather): string {
   if (w.isHistorical) return "기록";
-  if (w.isClimate) return "평년";
+  if (w.isClimate) return "미정";
   return "예보";
 }
 
-/** 강수확률·강수량·평년 안내를 한 줄로. 없으면 빈 문자열. */
-export function weatherDetailLine(w: DayWeather): string {
+/**
+ * 강수·평년 안내 한 줄. 평년값이면 "평년값(최근 N년)" 과
+ * (날짜를 주면) "M/D부터 예보" 안내까지 붙인다. 없으면 빈 문자열.
+ */
+export function weatherDetailLine(w: DayWeather, dateYMD?: string): string {
   const parts: string[] = [];
+  if (w.isClimate) parts.push(`평년값(최근 ${CLIMATE_YEARS}년)`);
   if (w.precipProb != null) parts.push(`강수확률 ${w.precipProb}%`);
   if (w.precipMm) parts.push(`강수량 ${w.precipMm}mm`);
-  if (w.isClimate) parts.push(`최근 ${CLIMATE_YEARS}년 평균`);
+  if (w.isClimate && dateYMD) parts.push(`${forecastAvailableFrom(dateYMD)}부터 예보`);
   return parts.join(" · ");
 }
 

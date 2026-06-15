@@ -11,7 +11,7 @@ import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
 import { durationLabelKo, formatShortKo } from "@/services/dates";
 import { directionsUrl, placeMapsUrl } from "@/services/maps";
 import { buildScheduleRows, decodeTripFromShare, fetchSharedTrip } from "@/services/share";
-import { describeWeather, weatherSourceLabel } from "@/services/weather";
+import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, Trip } from "@/types/trip";
 
 function openExternal(url: string) {
@@ -169,9 +169,10 @@ export default function SharePage() {
           {dayPlan?.weather ? (
             <Text style={styles.dayWeather}>
               {describeWeather(dayPlan.weather.code).emoji} {describeWeather(dayPlan.weather.code).label} · 최고{" "}
-              {dayPlan.weather.tempMax}° / 최저 {dayPlan.weather.tempMin}°
-              {dayPlan.weather.precipProb != null ? ` · 강수확률 ${dayPlan.weather.precipProb}%` : ""}
-              {` · ${weatherSourceLabel(dayPlan.weather)}`}
+              {dayPlan.weather.tempMax}° / 최저 {dayPlan.weather.tempMin}° · {weatherSourceLabel(dayPlan.weather)}
+              {weatherDetailLine(dayPlan.weather, dayPlan.date)
+                ? ` · ${weatherDetailLine(dayPlan.weather, dayPlan.date)}`
+                : ""}
             </Text>
           ) : null}
           {filledSlots.length === 0 ? (

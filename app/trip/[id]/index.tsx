@@ -255,8 +255,8 @@ export default function TripDetailScreen() {
                 {describeWeather(dayPlan.weather.code).label} · 최고 {dayPlan.weather.tempMax}° / 최저{" "}
                 {dayPlan.weather.tempMin}°
               </Text>
-              {weatherDetailLine(dayPlan.weather) ? (
-                <Text style={styles.weatherSub}>{weatherDetailLine(dayPlan.weather)}</Text>
+              {weatherDetailLine(dayPlan.weather, dayPlan.date) ? (
+                <Text style={styles.weatherSub}>{weatherDetailLine(dayPlan.weather, dayPlan.date)}</Text>
               ) : null}
             </View>
             <Text
