@@ -1,10 +1,11 @@
-import { getSlotInfo } from "@/constants/timeSlots";
+import { getSlotInfo, TIME_SLOTS } from "@/constants/timeSlots";
 import {
   arrivalReadyMinutes,
   departureCutoffMinutes,
   parseHHMM,
 } from "@/services/airports";
-import type { SlotItem, Trip } from "@/types/trip";
+import { rebuildDayDates } from "@/services/dates";
+import type { DayPlan, SlotItem, Trip } from "@/types/trip";
 
 /**
  * 도착·출발 시각에 따라 해당 슬롯을 AI가 채우거나 진행률에 포함해야 하는지.
@@ -31,6 +32,38 @@ export function isSlotInFlightWindow(
   }
 
   return true;
+}
+
+/**
+ * 새 출발일/기간에 맞춰 day 목록을 다시 만든다.
+ * - 기존 day(=같은 day 번호)의 슬롯·장소는 그대로 유지
+ * - 늘어난 날은 기본 슬롯으로 채워 추가
+ * - 줄어든 날은 잘라냄
+ * 마지막에 출발일 기준으로 모든 날짜를 다시 매긴다.
+ */
+export function resizeTripDays(
+  existing: DayPlan[],
+  startYMD: string,
+  duration: number,
+): DayPlan[] {
+  const byDay = new Map(existing.map((d) => [d.day, d]));
+  const days: DayPlan[] = [];
+  for (let i = 0; i < duration; i++) {
+    const dayNum = i + 1;
+    days.push(
+      byDay.get(dayNum) ?? {
+        day: dayNum,
+        date: "",
+        slots: TIME_SLOTS.map<SlotItem>((s) => ({ slot: s.id, time: s.defaultTime })),
+      },
+    );
+  }
+  return rebuildDayDates(days, startYMD);
+}
+
+/** 기간이 duration 으로 줄 때 사라지는 날들 중 장소가 들어있는 날 (확인용) */
+export function droppedDaysWithPlaces(existing: DayPlan[], duration: number): DayPlan[] {
+  return existing.filter((d) => d.day > duration && d.slots.some((s) => s.place));
 }
 
 export function countTripSlots(trip: Trip): { total: number; filled: number } {

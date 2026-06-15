@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CalendarPicker } from "@/components/ui/CalendarPicker";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP, REGIONS } from "@/constants/regions";
 import {
@@ -22,16 +23,9 @@ import {
   getAirportInfo,
 } from "@/services/airports";
 import { searchPlaces, type PlaceSuggestion } from "@/services/api";
+import { daysInclusive, durationLabelKo, formatShortKo, ymdFromToday } from "@/services/dates";
 import { useTripStore } from "@/stores/tripStore";
 import type { RegionId, ThemeId } from "@/types/trip";
-
-const DURATIONS = [
-  { days: 1, label: "당일치기" },
-  { days: 2, label: "1박2일" },
-  { days: 3, label: "2박3일" },
-  { days: 4, label: "3박4일" },
-  { days: 5, label: "4박5일" },
-];
 
 const THEMES: { id: ThemeId; title: string; desc: string; icon: keyof typeof Ionicons.glyphMap; color: string }[] = [
   { id: "food", title: "먹방", desc: "맛집, 카페, 로컬 음식 중심", icon: "restaurant-outline", color: Colors.primary },
@@ -42,12 +36,6 @@ const THEMES: { id: ThemeId; title: string; desc: string; icon: keyof typeof Ion
 
 const STEPS = ["지역", "목적지", "기간", "비행기", "테마", "확인"];
 
-function getStartDate(offsetDays = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().split("T")[0];
-}
-
 export default function NewTripScreen() {
   const insets = useSafeAreaInsets();
   const createTrip = useTripStore((state) => state.createTrip);
@@ -55,9 +43,9 @@ export default function NewTripScreen() {
   const [step, setStep] = useState(0);
   const [region, setRegion] = useState<RegionId>("jp");
   const [destination, setDestination] = useState("");
-  const [duration, setDuration] = useState(3);
   const [theme, setTheme] = useState<ThemeId>("food");
-  const [startDate, setStartDate] = useState(getStartDate());
+  const [startDate, setStartDate] = useState<string>(ymdFromToday());
+  const [endDate, setEndDate] = useState<string | undefined>(ymdFromToday(2));
   const [arrivalTime, setArrivalTime] = useState("14:00");
   const [departureTime, setDepartureTime] = useState("18:00");
   const [useFlight, setUseFlight] = useState(true);
@@ -65,7 +53,13 @@ export default function NewTripScreen() {
   const [isSearching, setIsSearching] = useState(false);
 
   const activeRegion = REGION_MAP[region];
-  const canGoNext = step !== 1 || destination.trim().length > 0;
+  const duration = useMemo(
+    () => (startDate && endDate ? daysInclusive(startDate, endDate) : 0),
+    [startDate, endDate],
+  );
+  const canGoNext =
+    (step !== 1 || destination.trim().length > 0) &&
+    (step !== 2 || (!!startDate && !!endDate));
 
   useEffect(() => {
     progress.value = withTiming((step + 1) / STEPS.length, { duration: 220 });
@@ -91,14 +85,10 @@ export default function NewTripScreen() {
     width: `${progress.value * 100}%`,
   }));
 
-  const startOptions = useMemo(
-    () => [
-      { label: "오늘", value: getStartDate(0) },
-      { label: "내일", value: getStartDate(1) },
-      { label: "주말", value: getStartDate(5) },
-    ],
-    [],
-  );
+  function handleRangeChange(start: string, end?: string) {
+    setStartDate(start);
+    setEndDate(end);
+  }
 
   async function submit() {
     const trip = await createTrip({
@@ -206,32 +196,30 @@ export default function NewTripScreen() {
 
         {step === 2 ? (
           <View>
-            <View style={styles.grid}>
-              {DURATIONS.map((item) => {
-                const active = duration === item.days;
-                return (
-                  <Pressable
-                    key={item.days}
-                    onPress={() => setDuration(item.days)}
-                    style={[styles.durationCard, active && styles.selectedCard]}
-                  >
-                    <Text style={styles.durationDays}>{item.days}일</Text>
-                    <Text style={styles.cardDesc}>{item.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={styles.subhead}>출발일</Text>
-            <View style={styles.quickList}>
-              {startOptions.map((item) => (
-                <Pressable
-                  key={item.value}
-                  onPress={() => setStartDate(item.value)}
-                  style={[styles.quickChip, startDate === item.value && styles.quickChipActive]}
-                >
-                  <Text style={[styles.quickText, startDate === item.value && styles.quickTextActive]}>{item.label}</Text>
-                </Pressable>
-              ))}
+            <Text style={styles.rangeHint}>
+              출발일과 돌아오는 날을 고르면 며칠 일정인지 자동으로 정해져요.
+            </Text>
+            <View style={styles.calendarCard}>
+              <View style={styles.selectedDateRow}>
+                <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
+                {endDate ? (
+                  <Text style={styles.selectedDateText}>
+                    {formatShortKo(startDate)} ~ {formatShortKo(endDate)}
+                    {"  "}
+                    <Text style={styles.selectedDurationText}>· {durationLabelKo(duration)}</Text>
+                  </Text>
+                ) : (
+                  <Text style={styles.selectedDateText}>
+                    {formatShortKo(startDate)} 출발 · 돌아오는 날을 선택하세요
+                  </Text>
+                )}
+              </View>
+              <CalendarPicker
+                mode="range"
+                startDate={startDate}
+                endDate={endDate}
+                onRangeChange={handleRangeChange}
+              />
             </View>
           </View>
         ) : null}
@@ -277,11 +265,14 @@ export default function NewTripScreen() {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>기간</Text>
-              <Text style={styles.summaryValue}>{duration}일</Text>
+              <Text style={styles.summaryValue}>{durationLabelKo(duration)}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>출발일</Text>
-              <Text style={styles.summaryValue}>{startDate}</Text>
+              <Text style={styles.summaryLabel}>날짜</Text>
+              <Text style={styles.summaryValue}>
+                {formatShortKo(startDate)}
+                {endDate && duration > 1 ? ` ~ ${formatShortKo(endDate)}` : ""}
+              </Text>
             </View>
             {useFlight ? (
               <View style={styles.summaryRow}>
@@ -650,17 +641,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  quickChipActive: {
-    backgroundColor: Colors.dark,
-    borderColor: Colors.dark,
-  },
   quickText: {
     fontSize: 13,
     color: Colors.textSecond,
     fontWeight: "800",
-  },
-  quickTextActive: {
-    color: "white",
   },
   suggestion: {
     flexDirection: "row",
@@ -684,24 +668,36 @@ const styles = StyleSheet.create({
     color: Colors.textSecond,
     marginTop: 2,
   },
-  durationCard: {
-    width: "48%",
-    borderRadius: 8,
+  calendarCard: {
+    marginTop: 14,
+    borderRadius: 12,
     backgroundColor: Colors.card,
-    padding: 16,
     borderWidth: 1,
     borderColor: Colors.border,
+    padding: 16,
   },
-  durationDays: {
-    fontSize: 24,
+  selectedDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
+  },
+  selectedDateText: {
+    fontSize: 14,
     fontWeight: "900",
     color: Colors.textPrimary,
   },
-  subhead: {
-    marginTop: 24,
-    fontSize: 15,
-    fontWeight: "900",
-    color: Colors.textPrimary,
+  selectedDurationText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.primary,
+  },
+  rangeHint: {
+    fontSize: 13,
+    color: Colors.textSecond,
+    fontWeight: "700",
+    lineHeight: 19,
+    marginBottom: 4,
   },
   themeList: {
     gap: 10,
