@@ -22,47 +22,29 @@ import { REGIONS } from "@/constants/regions";
 import { generateCourseTrip, type CourseProgress } from "@/services/aiCourse";
 import { useTripStore } from "@/stores/tripStore";
 
+// 지역별 3개씩. 도시·기간·테마를 다양하게 두고, 각 도시는 itineraryTemplates 의
+// 검증된 권역(day-area)을 따라 일자별로 다른 동선이 채워진다.
 const COURSES: Course[] = [
-  {
-    id: "tokyo-food",
-    title: "도쿄 첫 여행 맛집 루트",
-    region: "jp",
-    destination: "도쿄",
-    duration: 2,
-    places: 8,
-    theme: "food",
-    icon: "restaurant-outline",
-  },
-  {
-    id: "osaka-easy",
-    title: "오사카 초보자 2박3일",
-    region: "jp",
-    destination: "오사카",
-    duration: 3,
-    places: 10,
-    theme: "sightseeing",
-    icon: "map-outline",
-  },
-  {
-    id: "taipei-night",
-    title: "타이베이 야시장 산책",
-    region: "tw",
-    destination: "타이베이",
-    duration: 2,
-    places: 6,
-    theme: "food",
-    icon: "moon-outline",
-  },
-  {
-    id: "seoul-weekend",
-    title: "서울 주말 나들이",
-    region: "kr",
-    destination: "서울",
-    duration: 2,
-    places: 7,
-    theme: "activity",
-    icon: "walk-outline",
-  },
+  // 일본
+  { id: "tokyo-classic", title: "도쿄 첫 여행 4박5일 핵심", region: "jp", destination: "도쿄", duration: 5, places: 16, theme: "sightseeing", icon: "camera-outline" },
+  { id: "osaka-food", title: "오사카 먹방 2박3일", region: "jp", destination: "오사카", duration: 3, places: 11, theme: "food", icon: "restaurant-outline" },
+  { id: "kyoto-zen", title: "교토 감성 사찰 2박3일", region: "jp", destination: "교토", duration: 3, places: 10, theme: "sightseeing", icon: "leaf-outline" },
+  // 한국
+  { id: "seoul-core", title: "서울 핵심 2박3일", region: "kr", destination: "서울", duration: 3, places: 11, theme: "sightseeing", icon: "business-outline" },
+  { id: "busan-sea", title: "부산 바다 1박2일", region: "kr", destination: "부산", duration: 2, places: 7, theme: "activity", icon: "boat-outline" },
+  { id: "jeju-drive", title: "제주 렌터카 3박4일", region: "kr", destination: "제주", duration: 4, places: 13, theme: "nature", icon: "leaf-outline" },
+  // 대만
+  { id: "taipei-foodie", title: "타이베이 미식·야시장 3박4일", region: "tw", destination: "타이베이", duration: 4, places: 13, theme: "food", icon: "moon-outline" },
+  { id: "taichung-chill", title: "타이중 감성 2박3일", region: "tw", destination: "타이중", duration: 3, places: 10, theme: "sightseeing", icon: "color-palette-outline" },
+  { id: "kaohsiung-port", title: "가오슝 항구 1박2일", region: "tw", destination: "가오슝", duration: 2, places: 7, theme: "activity", icon: "boat-outline" },
+  // 미국
+  { id: "nyc-core", title: "뉴욕 4박5일 핵심", region: "us", destination: "뉴욕", duration: 5, places: 16, theme: "sightseeing", icon: "business-outline" },
+  { id: "la-vibes", title: "LA 자유 3박4일", region: "us", destination: "LA", duration: 4, places: 13, theme: "activity", icon: "sunny-outline" },
+  { id: "sf-classic", title: "샌프란시스코 2박3일", region: "us", destination: "샌프란시스코", duration: 3, places: 10, theme: "sightseeing", icon: "earth-outline" },
+  // 중국
+  { id: "shanghai-modern", title: "상하이 3박4일", region: "cn", destination: "상하이", duration: 4, places: 13, theme: "sightseeing", icon: "business-outline" },
+  { id: "beijing-history", title: "베이징 역사탐방 3박4일", region: "cn", destination: "베이징", duration: 4, places: 13, theme: "sightseeing", icon: "library-outline" },
+  { id: "chengdu-panda", title: "청두 판다·미식 3박4일", region: "cn", destination: "청두", duration: 4, places: 13, theme: "food", icon: "paw-outline" },
 ];
 
 export default function HomeScreen() {
