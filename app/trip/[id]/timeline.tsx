@@ -18,6 +18,7 @@ import { REGION_MAP } from "@/constants/regions";
 import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
 import { useEnrichTripPlaces } from "@/hooks/useEnrichTripPlaces";
 import { useTrip } from "@/hooks/useTrip";
+import { useTripWeather } from "@/hooks/useTripWeather";
 import {
   arrivalReadyMinutes,
   departureCutoffMinutes,
@@ -33,6 +34,7 @@ import {
   type TravelMode,
 } from "@/services/maps";
 import { getCurrentLocation, type Coords, type GeoStatus } from "@/services/geolocation";
+import { describeWeather } from "@/services/weather";
 import type { Place, SlotItem, Trip } from "@/types/trip";
 
 type ModeOverride = "auto" | "driving";
@@ -64,6 +66,7 @@ export default function TimelineScreen() {
   const [focusedPlace, setFocusedPlace] = useState<SlotItem | null>(null);
 
   useEnrichTripPlaces(trip);
+  useTripWeather(trip);
 
   useEffect(() => {
     setGeoStatus("loading");
@@ -173,6 +176,7 @@ export default function TimelineScreen() {
             >
               <Text style={[styles.dayTabText, active && styles.dayTabTextActive]}>
                 {day.day}일차
+                {day.weather ? ` ${describeWeather(day.weather.code).emoji}` : ""}
               </Text>
             </Pressable>
           );
@@ -218,6 +222,29 @@ export default function TimelineScreen() {
   // 슬롯 카드 렌더 — 두 레이아웃에서 공유
   const renderSlots = (compact: boolean) => (
     <>
+      {dayPlan?.weather ? (
+        <View style={styles.weatherBanner}>
+          <Text style={styles.weatherBannerEmoji}>{describeWeather(dayPlan.weather.code).emoji}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.weatherBannerTitle}>
+              {describeWeather(dayPlan.weather.code).label} · 최고 {dayPlan.weather.tempMax}° / 최저{" "}
+              {dayPlan.weather.tempMin}°
+            </Text>
+            {dayPlan.weather.precipProb != null || dayPlan.weather.precipMm ? (
+              <Text style={styles.weatherBannerSub}>
+                {dayPlan.weather.precipProb != null ? `강수확률 ${dayPlan.weather.precipProb}%` : ""}
+                {dayPlan.weather.precipProb != null && dayPlan.weather.precipMm ? " · " : ""}
+                {dayPlan.weather.precipMm ? `강수량 ${dayPlan.weather.precipMm}mm` : ""}
+              </Text>
+            ) : null}
+          </View>
+          <Text
+            style={[styles.weatherBannerTag, dayPlan.weather.isHistorical && styles.weatherBannerTagPast]}
+          >
+            {dayPlan.weather.isHistorical ? "기록" : "예보"}
+          </Text>
+        </View>
+      ) : null}
       <FlightBanner trip={trip} day={activeDay} position="arrival" />
       <View style={compact ? styles.listCompact : styles.list}>
         {filledSlots.length === 0 ? (
@@ -624,6 +651,36 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 12,
     fontWeight: "800",
+  },
+  weatherBanner: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  weatherBannerEmoji: { fontSize: 22 },
+  weatherBannerTitle: { fontSize: 13, fontWeight: "900", color: Colors.textPrimary },
+  weatherBannerSub: { fontSize: 11, fontWeight: "700", color: Colors.textSecond, marginTop: 3 },
+  weatherBannerTag: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.info,
+    backgroundColor: "#EAF3FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  weatherBannerTagPast: {
+    color: Colors.textSecond,
+    backgroundColor: Colors.bg,
   },
   list: { paddingHorizontal: 20, paddingTop: 6 },
   listCompact: { paddingHorizontal: 14, paddingTop: 6 },
