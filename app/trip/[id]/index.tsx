@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,9 +14,9 @@ import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
 import { getAirportInfo } from "@/services/airports";
-import { formatShortKo, rebuildDayDates } from "@/services/dates";
+import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
 import { buildScheduleText, createShareUrl } from "@/services/share";
-import { isSlotInFlightWindow } from "@/services/tripHelpers";
+import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
 import type { Place, SlotId } from "@/types/trip";
 
 const PIN_COLORS = ["#FF3B30", "#0A84FF", "#30D158", "#FF9500", "#5E5CE6", "#AF52DE"];
@@ -43,15 +43,23 @@ export default function TripDetailScreen() {
   const [activeDay, setActiveDay] = useState(1);
   const [customOpen, setCustomOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [pendingStart, setPendingStart] = useState<string>();
+  const [pendingEnd, setPendingEnd] = useState<string>();
   const { trip, stats, removePlace, deleteSlot, setSlotTime, updateTrip } = useTrip(id);
   const ai = useAIRecommend(trip);
 
-  const dayPlan = trip?.days.find((day) => day.day === activeDay);
+  // 기간을 줄이면 활성 day 가 사라질 수 있으니, 없으면 첫 날로 폴백.
+  const dayPlan = trip?.days.find((day) => day.day === activeDay) ?? trip?.days[0];
   const places = useMemo(() => dayPlan?.slots.map((slot) => slot.place).filter(Boolean) as Place[] ?? [], [dayPlan]);
   const region = trip ? REGION_MAP[trip.region] : undefined;
   const sortedDays = useMemo(() => (trip ? [...trip.days].sort((a, b) => a.day - b.day) : []), [trip]);
   const startDate = sortedDays[0]?.date;
   const endDate = sortedDays[sortedDays.length - 1]?.date;
+
+  // 기간이 줄어 활성 day 가 범위를 벗어나면 1일차로 되돌린다.
+  useEffect(() => {
+    if (trip && activeDay > trip.duration) setActiveDay(1);
+  }, [trip, activeDay]);
 
   if (!trip || !dayPlan) {
     return (
@@ -135,11 +143,40 @@ export default function TripDetailScreen() {
     });
   }
 
-  async function changeStartDate(ymd: string) {
+  function openDatePicker() {
+    setPendingStart(startDate);
+    setPendingEnd(endDate);
+    setDatePickerOpen(true);
+  }
+
+  async function applyDateRange(start: string, duration: number) {
     if (!trip) return;
-    // 출발일을 바꾸면 모든 날짜를 다시 매긴다 (슬롯/장소는 그대로 유지).
-    await updateTrip(trip.id, { days: rebuildDayDates(trip.days, ymd) });
+    await updateTrip(trip.id, {
+      duration,
+      days: resizeTripDays(trip.days, start, duration),
+    });
     setDatePickerOpen(false);
+  }
+
+  // 달력에서 기간(시작~종료)을 다 고르면 호출. 날짜가 줄어 장소가 사라질 땐 확인.
+  function handleRangeChange(start: string, end?: string) {
+    setPendingStart(start);
+    setPendingEnd(end);
+    if (!trip || !end) return;
+    const duration = daysInclusive(start, end);
+    const dropped = droppedDaysWithPlaces(trip.days, duration);
+    if (dropped.length > 0) {
+      Alert.alert(
+        "일정이 짧아져요",
+        `${dropped.length}개 날의 장소가 함께 삭제됩니다. 계속할까요?`,
+        [
+          { text: "취소", style: "cancel" },
+          { text: "변경", style: "destructive", onPress: () => applyDateRange(start, duration) },
+        ],
+      );
+      return;
+    }
+    applyDateRange(start, duration);
   }
 
 
@@ -170,7 +207,7 @@ export default function TripDetailScreen() {
               </Pressable>
             ) : null}
           </View>
-          <Pressable onPress={() => setDatePickerOpen(true)} style={styles.dateRow}>
+          <Pressable onPress={openDatePicker} style={styles.dateRow}>
             <Ionicons name="calendar-outline" size={14} color="white" />
             <Text style={styles.dateRowText}>
               {startDate ? formatShortKo(startDate) : "날짜 미정"}
@@ -293,12 +330,24 @@ export default function TripDetailScreen() {
         <Pressable style={styles.modalBackdrop} onPress={() => setDatePickerOpen(false)}>
           <Pressable style={[styles.modalCard, { paddingBottom: insets.bottom + 20 }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>출발일 선택</Text>
+              <View>
+                <Text style={styles.modalTitle}>여행 날짜</Text>
+                <Text style={styles.modalSubtitle}>
+                  {pendingEnd
+                    ? `${formatShortKo(pendingStart)} ~ ${formatShortKo(pendingEnd)} · ${durationLabelKo(daysInclusive(pendingStart!, pendingEnd))}`
+                    : `${formatShortKo(pendingStart)} 출발 · 돌아오는 날을 선택하세요`}
+                </Text>
+              </View>
               <Pressable onPress={() => setDatePickerOpen(false)} style={styles.modalClose}>
                 <Ionicons name="close" size={20} color={Colors.textSecond} />
               </Pressable>
             </View>
-            <CalendarPicker value={startDate} onChange={changeStartDate} />
+            <CalendarPicker
+              mode="range"
+              startDate={pendingStart}
+              endDate={pendingEnd}
+              onRangeChange={handleRangeChange}
+            />
           </Pressable>
         </Pressable>
       </Modal>
@@ -429,6 +478,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
     color: Colors.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Colors.primary,
+    marginTop: 4,
   },
   modalClose: {
     width: 34,

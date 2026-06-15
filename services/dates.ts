@@ -43,6 +43,20 @@ export function formatLongKo(value?: string): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS_KO[d.getDay()]})`;
 }
 
+/** 출발일~도착일 사이의 날 수(양끝 포함). 잘못된 범위면 1. */
+export function daysInclusive(startYMD: string, endYMD: string): number {
+  const start = parseYMD(startYMD);
+  const end = parseYMD(endYMD);
+  const diff = Math.round((end.getTime() - start.getTime()) / 86400000);
+  return diff >= 0 ? diff + 1 : 1;
+}
+
+/** 일수 → "당일치기" | "N박 M일" */
+export function durationLabelKo(duration: number): string {
+  const nights = duration - 1;
+  return nights >= 1 ? `${nights}박 ${duration}일` : "당일치기";
+}
+
 /**
  * 출발일(startYMD)을 기준으로 day 1, 2, 3 … 의 날짜를 다시 매긴다.
  * 슬롯 등 나머지 필드는 그대로 두고 date 만 갱신한다.
