@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TripMap } from "@/components/map/TripMap";
 import { CalendarPicker } from "@/components/ui/CalendarPicker";
 import { AIRecommendSheet } from "@/components/trip/AIRecommendSheet";
-import { CustomSlotInline } from "@/components/trip/CustomSlotInline";
+import { AddPlaceInline } from "@/components/trip/AddPlaceInline";
 import { TimelineItem } from "@/components/trip/TimelineItem";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP } from "@/constants/regions";
@@ -43,7 +43,8 @@ export default function TripDetailScreen() {
   const insets = useSafeAreaInsets();
   const timelineRef = useRef<View>(null);
   const [activeDay, setActiveDay] = useState(1);
-  const [customOpen, setCustomOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSlot, setAddSlot] = useState<SlotId | undefined>(undefined);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [pendingStart, setPendingStart] = useState<string>();
   const [pendingEnd, setPendingEnd] = useState<string>();
@@ -138,12 +139,12 @@ export default function TripDetailScreen() {
     await Share.share({ message, url });
   }
 
-  function goAddPlace(slot?: string) {
-    if (!trip) return;
-    router.push({
-      pathname: "/trip/[id]/add-place",
-      params: { id: trip.id, day: String(activeDay), slot },
-    });
+  // 페이지 이동 없이 인라인 패널로 추가. 기본 슬롯이면 시간대 선택 모드로 미리 선택,
+  // 커스텀(custom-*) 슬롯이면 일반 추가로 연다.
+  function openAddPanel(slot?: string) {
+    const isDefault = !!slot && !slot.startsWith("custom");
+    setAddSlot(isDefault ? (slot as SlotId) : undefined);
+    setAddOpen(true);
   }
 
   function openDatePicker() {
@@ -273,21 +274,17 @@ export default function TripDetailScreen() {
         <TripMap places={places} pinColors={PIN_COLORS} />
 
         <View style={styles.actions}>
-          <Pressable onPress={() => goAddPlace()} style={styles.actionButton}>
-            <Ionicons name="add" size={18} color={Colors.primary} />
-            <Text style={styles.actionText}>장소 추가</Text>
-          </Pressable>
           <Pressable
-            onPress={() => setCustomOpen((v) => !v)}
-            style={[styles.actionButton, customOpen && styles.actionButtonActive]}
+            onPress={() => (addOpen ? setAddOpen(false) : openAddPanel())}
+            style={[styles.actionButton, addOpen && styles.actionButtonActive]}
           >
             <Ionicons
-              name={customOpen ? "remove" : "time-outline"}
+              name={addOpen ? "remove" : "add"}
               size={18}
-              color={customOpen ? "white" : Colors.primary}
+              color={addOpen ? "white" : Colors.primary}
             />
-            <Text style={[styles.actionText, customOpen && styles.actionTextActive]}>
-              {customOpen ? "닫기" : "직접 추가"}
+            <Text style={[styles.actionText, addOpen && styles.actionTextActive]}>
+              {addOpen ? "닫기" : "장소 추가"}
             </Text>
           </Pressable>
           <Pressable onPress={() => ai.run()} style={styles.actionButton}>
@@ -300,12 +297,15 @@ export default function TripDetailScreen() {
           </Pressable>
         </View>
 
-        {customOpen ? (
-          <CustomSlotInline
+        {addOpen ? (
+          <AddPlaceInline
+            key={addSlot ?? "top"}
             tripId={trip.id}
             day={activeDay}
             destination={trip.destination}
-            onClose={() => setCustomOpen(false)}
+            initialMode="slot"
+            initialSlot={addSlot}
+            onClose={() => setAddOpen(false)}
           />
         ) : null}
 
@@ -330,7 +330,7 @@ export default function TripDetailScreen() {
                 slot={slot}
                 isLast={index === dayPlan.slots.length - 1}
                 pinColor={PIN_COLORS[index % PIN_COLORS.length]}
-                onAdd={() => goAddPlace(slot.slot)}
+                onAdd={() => openAddPanel(slot.slot)}
                 onRemove={() => removePlace(trip.id, activeDay, slot.slot)}
                 onChangeTime={(time) => setSlotTime(trip.id, activeDay, slot.slot, time)}
                 onDelete={() => deleteSlot(trip.id, activeDay, slot.slot)}

@@ -68,7 +68,6 @@ export default function RootLayout() {
         <Stack.Screen name="trip/new" options={{ presentation: "card" }} />
         <Stack.Screen name="trip/[id]/index" />
         <Stack.Screen name="trip/[id]/timeline" />
-        <Stack.Screen name="trip/[id]/add-place" options={{ presentation: "modal" }} />
         <Stack.Screen name="dev/test" />
       </Stack>
     </GestureHandlerRootView>
