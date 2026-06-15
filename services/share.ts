@@ -47,6 +47,7 @@ interface SlimWeather {
   pp?: number; // precipProb
   pm?: number; // precipMm
   h: 0 | 1; // isHistorical
+  cm?: 1; // isClimate (평년값)
 }
 
 interface SlimDay {
@@ -103,6 +104,7 @@ function slimWeather(w: DayWeather): SlimWeather {
   const out: SlimWeather = { c: w.code, mx: w.tempMax, mn: w.tempMin, h: w.isHistorical ? 1 : 0 };
   if (w.precipProb != null) out.pp = w.precipProb;
   if (w.precipMm != null) out.pm = w.precipMm;
+  if (w.isClimate) out.cm = 1;
   return out;
 }
 
@@ -114,6 +116,7 @@ function fatWeather(s: SlimWeather): DayWeather {
     precipProb: s.pp,
     precipMm: s.pm,
     isHistorical: s.h === 1,
+    isClimate: s.cm === 1,
     fetchedAt: new Date().toISOString(),
   };
 }

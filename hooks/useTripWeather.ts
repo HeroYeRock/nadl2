@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { ymdFromToday } from "@/services/dates";
+import { parseYMD, ymdFromToday } from "@/services/dates";
 import { fetchDaysWeather, resolveTripCoords } from "@/services/weather";
 import { useTripStore } from "@/stores/tripStore";
 import type { Trip } from "@/types/trip";
 
 // 예보는 자주 바뀌므로 3시간마다 갱신. 지난 날짜(확정 기록)는 한 번 받으면 다시 안 받는다.
 const FORECAST_STALE_MS = 3 * 60 * 60 * 1000;
+const FORECAST_MAX_DAYS = 16;
 
 /**
  * trip 의 각 날짜 날씨를 백그라운드로 받아 trip.days[].weather 에 저장한다.
@@ -26,14 +27,19 @@ export function useTripWeather(trip?: Trip) {
       const today = ymdFromToday();
       const now = Date.now();
 
+      const todayMs = parseYMD(today).getTime();
       const need = trip!.days
         .filter((d) => {
           if (!d.date) return false;
           const w = d.weather;
           const isPast = d.date < today;
           if (isPast) return !w?.isHistorical; // 확정 기록이 이미 있으면 건너뜀
-          // 오늘/미래: 받은 적 없거나 오래된 예보면 갱신
-          return !w || now - new Date(w.fetchedAt).getTime() > FORECAST_STALE_MS;
+          if (!w) return true; // 오늘/미래: 받은 적 없으면 받기
+          // 평년값이었는데 이제 16일 예보 범위에 들어왔으면 실제 예보로 교체
+          const diffDays = Math.round((parseYMD(d.date).getTime() - todayMs) / 86400000);
+          if (w.isClimate && diffDays <= FORECAST_MAX_DAYS) return true;
+          // 오래된 예보면 갱신
+          return now - new Date(w.fetchedAt).getTime() > FORECAST_STALE_MS;
         })
         .map((d) => d.date);
 

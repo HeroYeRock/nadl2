@@ -18,7 +18,7 @@ import { getAirportInfo } from "@/services/airports";
 import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
-import { describeWeather } from "@/services/weather";
+import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, SlotId } from "@/types/trip";
 
 const PIN_COLORS = ["#FF3B30", "#0A84FF", "#30D158", "#FF9500", "#5E5CE6", "#AF52DE"];
@@ -255,16 +255,17 @@ export default function TripDetailScreen() {
                 {describeWeather(dayPlan.weather.code).label} · 최고 {dayPlan.weather.tempMax}° / 최저{" "}
                 {dayPlan.weather.tempMin}°
               </Text>
-              {dayPlan.weather.precipProb != null || dayPlan.weather.precipMm ? (
-                <Text style={styles.weatherSub}>
-                  {dayPlan.weather.precipProb != null ? `강수확률 ${dayPlan.weather.precipProb}%` : ""}
-                  {dayPlan.weather.precipProb != null && dayPlan.weather.precipMm ? " · " : ""}
-                  {dayPlan.weather.precipMm ? `강수량 ${dayPlan.weather.precipMm}mm` : ""}
-                </Text>
+              {weatherDetailLine(dayPlan.weather) ? (
+                <Text style={styles.weatherSub}>{weatherDetailLine(dayPlan.weather)}</Text>
               ) : null}
             </View>
-            <Text style={[styles.weatherTag, dayPlan.weather.isHistorical && styles.weatherTagPast]}>
-              {dayPlan.weather.isHistorical ? "기록" : "예보"}
+            <Text
+              style={[
+                styles.weatherTag,
+                (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherTagPast,
+              ]}
+            >
+              {weatherSourceLabel(dayPlan.weather)}
             </Text>
           </View>
         ) : null}

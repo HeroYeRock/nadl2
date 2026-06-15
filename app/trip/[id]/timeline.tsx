@@ -34,7 +34,7 @@ import {
   type TravelMode,
 } from "@/services/maps";
 import { getCurrentLocation, type Coords, type GeoStatus } from "@/services/geolocation";
-import { describeWeather } from "@/services/weather";
+import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, SlotItem, Trip } from "@/types/trip";
 
 type ModeOverride = "auto" | "driving";
@@ -230,18 +230,17 @@ export default function TimelineScreen() {
               {describeWeather(dayPlan.weather.code).label} · 최고 {dayPlan.weather.tempMax}° / 최저{" "}
               {dayPlan.weather.tempMin}°
             </Text>
-            {dayPlan.weather.precipProb != null || dayPlan.weather.precipMm ? (
-              <Text style={styles.weatherBannerSub}>
-                {dayPlan.weather.precipProb != null ? `강수확률 ${dayPlan.weather.precipProb}%` : ""}
-                {dayPlan.weather.precipProb != null && dayPlan.weather.precipMm ? " · " : ""}
-                {dayPlan.weather.precipMm ? `강수량 ${dayPlan.weather.precipMm}mm` : ""}
-              </Text>
+            {weatherDetailLine(dayPlan.weather) ? (
+              <Text style={styles.weatherBannerSub}>{weatherDetailLine(dayPlan.weather)}</Text>
             ) : null}
           </View>
           <Text
-            style={[styles.weatherBannerTag, dayPlan.weather.isHistorical && styles.weatherBannerTagPast]}
+            style={[
+              styles.weatherBannerTag,
+              (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherBannerTagPast,
+            ]}
           >
-            {dayPlan.weather.isHistorical ? "기록" : "예보"}
+            {weatherSourceLabel(dayPlan.weather)}
           </Text>
         </View>
       ) : null}

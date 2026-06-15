@@ -59,6 +59,8 @@ export interface DayWeather {
   fetchedAt: string;
   /** 지난 날짜의 실측(확정) 기록이면 true, 미래 예보면 false */
   isHistorical: boolean;
+  /** 16일 예보 범위를 넘어 평년값(최근 N년 평균)으로 채운 추정치면 true */
+  isClimate?: boolean;
 }
 
 export interface DayPlan {
