@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LZString from "lz-string";
-import { REGION_MAP } from "@/constants/regions";
 import { supabase } from "@/services/supabase";
-import type { Place, SlotItem, Trip } from "@/types/trip";
+import type { DayPlan, Place, SlotItem, Trip } from "@/types/trip";
 
 /**
  * 공유 링크용 trip 스냅샷 인코딩/디코딩 + 동기화.
@@ -137,40 +136,52 @@ function slimToTrip(slim: SlimTrip): Trip | null {
   };
 }
 
-const WEEKDAYS_KO = ["일", "월", "화", "수", "목", "금", "토"];
+/**
+ * 주소 문자열에서 대표 지역(구/시/군) 토큰 하나를 뽑는다.
+ * 한국어 주소를 우선 처리하고("도쿄도 시부야구 …" → "시부야구"),
+ * 안 되면 영문 주소("Shibuya City", "Chiyoda-ku")를 폴백으로 본다.
+ */
+function extractArea(address?: string): string | undefined {
+  if (!address) return undefined;
+  const tokens = address.split(/[\s,]+/).filter(Boolean);
+  // 구 → 시 → 군 순으로 가장 구체적인 행정구역을 찾는다.
+  for (const suffix of ["구", "시", "군"]) {
+    const hit = tokens.find((t) => t.length >= 2 && new RegExp(`[가-힣]${suffix}$`).test(t));
+    if (hit) return hit;
+  }
+  const en = address.match(/([A-Za-z]+)(?:\s+City|[- ]ku|[- ]shi|[- ]gun)\b/i);
+  return en ? en[1] : undefined;
+}
 
-function formatDayDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAYS_KO[d.getDay()]})`;
+/** 하루치 슬롯에서 방문 지역들을 모아 "시부야구/신주쿠구 일대" 라벨을 만든다. */
+function dayAreaLabel(day: DayPlan, fallbackDestination: string): string {
+  const areas: string[] = [];
+  let hasPlace = false;
+  for (const slot of day.slots) {
+    if (!slot.place) continue;
+    hasPlace = true;
+    const area = extractArea(slot.place.address);
+    if (area && !areas.includes(area)) areas.push(area);
+  }
+  if (areas.length === 0) return hasPlace ? `${fallbackDestination} 일대` : "일정 미정";
+  const shown = areas.slice(0, 4).join("/");
+  return areas.length > 4 ? `${shown} 외 일대` : `${shown} 일대`;
 }
 
 /**
- * 공유 메시지에 함께 붙일 일정표 텍스트.
- * 채워진 장소만 시간순으로 모아 "10:00  장소" 형태의 스케줄표를 만든다.
+ * 공유 메시지에 함께 붙일 일정 요약 텍스트.
+ * "3박 4일 일정 / N일차 - 지역 일대" 형태로 날짜별 동선을 한눈에 보여준다.
+ * 지역 라벨은 그날 장소들의 주소에서 자동 추출한다.
  * 링크(URL)는 포함하지 않는다 — 호출 측에서 메시지 맨 끝 단독 줄에 붙이거나
  * 별도 url 필드로 전달해, 링크가 깨지거나 받는 쪽 ID 추출이 어긋나지 않게 한다.
  */
 export function buildScheduleText(trip: Trip): string {
-  const region = REGION_MAP[trip.region]?.label ?? "여행";
-  const lines: string[] = [`🗓️ ${trip.title}`, `${region} · ${trip.duration}일`];
-  const multiDay = trip.days.length > 1;
-
+  const nights = trip.duration - 1;
+  const durationLabel = nights >= 1 ? `${nights}박 ${trip.duration}일` : "당일";
+  const lines: string[] = [`🗓️ ${trip.title} · ${durationLabel}`];
   for (const day of trip.days) {
-    const filled = day.slots.filter((slot) => slot.place);
-    if (filled.length === 0) continue;
-    const dateLabel = formatDayDate(day.date);
-    lines.push("");
-    lines.push(
-      multiDay
-        ? `[${day.day}일차]${dateLabel ? ` ${dateLabel}` : ""}`
-        : dateLabel || `${day.day}일차`,
-    );
-    for (const slot of filled) {
-      lines.push(`${slot.time}  ${slot.place!.name}`);
-    }
+    lines.push(`${day.day}일차 - ${dayAreaLabel(day, trip.destination)}`);
   }
-
   return lines.join("\n");
 }
 
