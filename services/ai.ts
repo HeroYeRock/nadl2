@@ -68,6 +68,30 @@ function uniquePlaces(places: Place[]): Place[] {
   });
 }
 
+// 숙박시설은 어떤 시간대 슬롯에도 어울리지 않으므로 후보에서 제외한다.
+// (Google 텍스트 검색에 호텔/모텔이 섞여 들어오는 경우가 있어 방어적으로 거른다)
+const LODGING_CATEGORIES = new Set([
+  "lodging",
+  "hotel",
+  "motel",
+  "resort_hotel",
+  "extended_stay_hotel",
+  "bed_and_breakfast",
+  "guest_house",
+  "hostel",
+  "campground",
+  "rv_park",
+  "apartment_complex",
+  "real_estate_agency",
+]);
+// 카테고리가 어긋나도 이름으로 한 번 더 거른다 (한/영/일 명확한 표현만)
+const LODGING_NAME = /호텔|모텔|리조트|펜션|게스트\s?하우스|hotel|motel|resort|hostel|guesthouse|ホテル|旅館/i;
+
+function isLodging(place: Place): boolean {
+  if (place.category && LODGING_CATEGORIES.has(place.category)) return true;
+  return LODGING_NAME.test(place.name ?? "");
+}
+
 async function collectCandidates(trip: Trip, day: number, slot: SlotId): Promise<Place[]> {
   const anchor = getAnchorPlace(trip, day);
   const region = REGION_MAP[trip.region]?.label ?? "";
@@ -109,9 +133,9 @@ async function collectCandidates(trip: Trip, day: number, slot: SlotId): Promise
     raw = await textSearchPlaces(keyword);
   }
 
-  // 여행 전체에서 이미 쓴 장소 제외 → 일자 간 중복 방지
+  // 숙박시설 제외 + 여행 전체에서 이미 쓴 장소 제외(일자 간 중복 방지)
   const filtered = uniquePlaces(raw).filter(
-    (p) => !p.placeId || !used.has(p.placeId),
+    (p) => !isLodging(p) && (!p.placeId || !used.has(p.placeId)),
   );
 
   return filtered.slice(0, 10);
