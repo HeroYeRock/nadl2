@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LZString from "lz-string";
+import { REGION_MAP } from "@/constants/regions";
 import { supabase } from "@/services/supabase";
 import type { Place, SlotItem, Trip } from "@/types/trip";
 
@@ -134,6 +135,43 @@ function slimToTrip(slim: SlimTrip): Trip | null {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+const WEEKDAYS_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+function formatDayDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAYS_KO[d.getDay()]})`;
+}
+
+/**
+ * 공유 메시지에 함께 붙일 일정표 텍스트.
+ * 채워진 장소만 시간순으로 모아 "10:00  장소" 형태의 스케줄표를 만든다.
+ * 링크(URL)는 포함하지 않는다 — 호출 측에서 메시지 맨 끝 단독 줄에 붙이거나
+ * 별도 url 필드로 전달해, 링크가 깨지거나 받는 쪽 ID 추출이 어긋나지 않게 한다.
+ */
+export function buildScheduleText(trip: Trip): string {
+  const region = REGION_MAP[trip.region]?.label ?? "여행";
+  const lines: string[] = [`🗓️ ${trip.title}`, `${region} · ${trip.duration}일`];
+  const multiDay = trip.days.length > 1;
+
+  for (const day of trip.days) {
+    const filled = day.slots.filter((slot) => slot.place);
+    if (filled.length === 0) continue;
+    const dateLabel = formatDayDate(day.date);
+    lines.push("");
+    lines.push(
+      multiDay
+        ? `[${day.day}일차]${dateLabel ? ` ${dateLabel}` : ""}`
+        : dateLabel || `${day.day}일차`,
+    );
+    for (const slot of filled) {
+      lines.push(`${slot.time}  ${slot.place!.name}`);
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export function encodeTripToShare(trip: Trip): string {

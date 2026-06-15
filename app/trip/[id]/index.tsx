@@ -13,7 +13,7 @@ import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
 import { getAirportInfo } from "@/services/airports";
-import { createShareUrl } from "@/services/share";
+import { buildScheduleText, createShareUrl } from "@/services/share";
 import { isSlotInFlightWindow } from "@/services/tripHelpers";
 import type { Place, SlotId } from "@/types/trip";
 
@@ -94,12 +94,16 @@ export default function TripDetailScreen() {
         ? window.location.origin
         : "https://nadl2.vercel.app";
     const url = await createShareUrl(origin, trip);
+    // 일정표 텍스트는 링크와 분리해 둔다. 링크는 항상 메시지 맨 끝 단독 줄에
+    // 두거나 url 필드로 따로 보내, 본문이 붙어도 링크가 깨지지 않게 한다.
+    const schedule = buildScheduleText(trip);
+    const message = `${schedule}\n\n🔗 ${url}`;
 
     if (Platform.OS === "web" && typeof navigator !== "undefined") {
       if (navigator.share) {
         try {
-          // URL 만 공유 (본문 텍스트를 붙이지 않아 링크가 깨지지 않게 함)
-          await navigator.share({ url });
+          // 일정표는 text 로, 링크는 url 필드로 따로 전달 → 링크가 깨지지 않게 함
+          await navigator.share({ title: trip.title, text: schedule, url });
           return;
         } catch (e) {
           // 사용자가 공유를 취소한 경우 → 조용히 무시
@@ -108,13 +112,13 @@ export default function TripDetailScreen() {
         }
       }
       try {
-        await navigator.clipboard.writeText(url);
-        Alert.alert("링크 복사됨", "공유 링크를 클립보드에 복사했어요. 붙여넣어 공유하세요.");
+        await navigator.clipboard.writeText(message);
+        Alert.alert("일정 복사됨", "일정표와 공유 링크를 클립보드에 복사했어요. 붙여넣어 공유하세요.");
       } catch {}
       return;
     }
 
-    await Share.share({ message: url, url });
+    await Share.share({ message, url });
   }
 
   function goAddPlace(slot?: string) {
