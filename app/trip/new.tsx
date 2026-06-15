@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CalendarPicker } from "@/components/ui/CalendarPicker";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP, REGIONS } from "@/constants/regions";
 import {
@@ -22,6 +23,7 @@ import {
   getAirportInfo,
 } from "@/services/airports";
 import { searchPlaces, type PlaceSuggestion } from "@/services/api";
+import { formatLongKo, ymdFromToday } from "@/services/dates";
 import { useTripStore } from "@/stores/tripStore";
 import type { RegionId, ThemeId } from "@/types/trip";
 
@@ -42,12 +44,6 @@ const THEMES: { id: ThemeId; title: string; desc: string; icon: keyof typeof Ion
 
 const STEPS = ["지역", "목적지", "기간", "비행기", "테마", "확인"];
 
-function getStartDate(offsetDays = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().split("T")[0];
-}
-
 export default function NewTripScreen() {
   const insets = useSafeAreaInsets();
   const createTrip = useTripStore((state) => state.createTrip);
@@ -57,7 +53,7 @@ export default function NewTripScreen() {
   const [destination, setDestination] = useState("");
   const [duration, setDuration] = useState(3);
   const [theme, setTheme] = useState<ThemeId>("food");
-  const [startDate, setStartDate] = useState(getStartDate());
+  const [startDate, setStartDate] = useState(ymdFromToday());
   const [arrivalTime, setArrivalTime] = useState("14:00");
   const [departureTime, setDepartureTime] = useState("18:00");
   const [useFlight, setUseFlight] = useState(true);
@@ -93,9 +89,9 @@ export default function NewTripScreen() {
 
   const startOptions = useMemo(
     () => [
-      { label: "오늘", value: getStartDate(0) },
-      { label: "내일", value: getStartDate(1) },
-      { label: "주말", value: getStartDate(5) },
+      { label: "오늘", value: ymdFromToday(0) },
+      { label: "내일", value: ymdFromToday(1) },
+      { label: "주말", value: ymdFromToday(5) },
     ],
     [],
   );
@@ -233,6 +229,13 @@ export default function NewTripScreen() {
                 </Pressable>
               ))}
             </View>
+            <View style={styles.calendarCard}>
+              <View style={styles.selectedDateRow}>
+                <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
+                <Text style={styles.selectedDateText}>{formatLongKo(startDate)}</Text>
+              </View>
+              <CalendarPicker value={startDate} onChange={setStartDate} />
+            </View>
           </View>
         ) : null}
 
@@ -281,7 +284,7 @@ export default function NewTripScreen() {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>출발일</Text>
-              <Text style={styles.summaryValue}>{startDate}</Text>
+              <Text style={styles.summaryValue}>{formatLongKo(startDate)}</Text>
             </View>
             {useFlight ? (
               <View style={styles.summaryRow}>
@@ -700,6 +703,25 @@ const styles = StyleSheet.create({
   subhead: {
     marginTop: 24,
     fontSize: 15,
+    fontWeight: "900",
+    color: Colors.textPrimary,
+  },
+  calendarCard: {
+    marginTop: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+  },
+  selectedDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
+  },
+  selectedDateText: {
+    fontSize: 14,
     fontWeight: "900",
     color: Colors.textPrimary,
   },

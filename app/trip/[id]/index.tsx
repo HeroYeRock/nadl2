@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
-import { Alert, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TripMap } from "@/components/map/TripMap";
+import { CalendarPicker } from "@/components/ui/CalendarPicker";
 import { AIRecommendSheet } from "@/components/trip/AIRecommendSheet";
 import { CustomSlotInline } from "@/components/trip/CustomSlotInline";
 import { TimelineItem } from "@/components/trip/TimelineItem";
@@ -13,6 +14,7 @@ import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
 import { getAirportInfo } from "@/services/airports";
+import { formatShortKo, rebuildDayDates } from "@/services/dates";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { isSlotInFlightWindow } from "@/services/tripHelpers";
 import type { Place, SlotId } from "@/types/trip";
@@ -40,12 +42,16 @@ export default function TripDetailScreen() {
   const timelineRef = useRef<View>(null);
   const [activeDay, setActiveDay] = useState(1);
   const [customOpen, setCustomOpen] = useState(false);
-  const { trip, stats, removePlace, deleteSlot, setSlotTime } = useTrip(id);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const { trip, stats, removePlace, deleteSlot, setSlotTime, updateTrip } = useTrip(id);
   const ai = useAIRecommend(trip);
 
   const dayPlan = trip?.days.find((day) => day.day === activeDay);
   const places = useMemo(() => dayPlan?.slots.map((slot) => slot.place).filter(Boolean) as Place[] ?? [], [dayPlan]);
   const region = trip ? REGION_MAP[trip.region] : undefined;
+  const sortedDays = useMemo(() => (trip ? [...trip.days].sort((a, b) => a.day - b.day) : []), [trip]);
+  const startDate = sortedDays[0]?.date;
+  const endDate = sortedDays[sortedDays.length - 1]?.date;
 
   if (!trip || !dayPlan) {
     return (
@@ -129,6 +135,13 @@ export default function TripDetailScreen() {
     });
   }
 
+  async function changeStartDate(ymd: string) {
+    if (!trip) return;
+    // 출발일을 바꾸면 모든 날짜를 다시 매긴다 (슬롯/장소는 그대로 유지).
+    await updateTrip(trip.id, { days: rebuildDayDates(trip.days, ymd) });
+    setDatePickerOpen(false);
+  }
+
 
   return (
     <View style={styles.screen}>
@@ -157,6 +170,15 @@ export default function TripDetailScreen() {
               </Pressable>
             ) : null}
           </View>
+          <Pressable onPress={() => setDatePickerOpen(true)} style={styles.dateRow}>
+            <Ionicons name="calendar-outline" size={14} color="white" />
+            <Text style={styles.dateRowText}>
+              {startDate ? formatShortKo(startDate) : "날짜 미정"}
+              {trip.duration > 1 && endDate ? ` ~ ${formatShortKo(endDate)}` : ""}
+            </Text>
+            <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.7)" />
+          </Pressable>
+
           <View style={styles.progressLine}>
             <View style={[styles.progressFill, { width: `${stats.progress * 100}%` }]} />
           </View>
@@ -174,6 +196,9 @@ export default function TripDetailScreen() {
             return (
               <Pressable key={day.day} onPress={() => setActiveDay(day.day)} style={[styles.dayTab, active && styles.dayTabActive]}>
                 <Text style={[styles.dayTabText, active && styles.dayTabTextActive]}>{day.day}일차</Text>
+                {day.date ? (
+                  <Text style={[styles.dayTabDate, active && styles.dayTabDateActive]}>{formatShortKo(day.date)}</Text>
+                ) : null}
               </Pressable>
             );
           })}
@@ -258,6 +283,25 @@ export default function TripDetailScreen() {
         onAccept={ai.accept}
         onClose={ai.dismiss}
       />
+
+      <Modal
+        visible={datePickerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDatePickerOpen(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setDatePickerOpen(false)}>
+          <Pressable style={[styles.modalCard, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>출발일 선택</Text>
+              <Pressable onPress={() => setDatePickerOpen(false)} style={styles.modalClose}>
+                <Ionicons name="close" size={20} color={Colors.textSecond} />
+              </Pressable>
+            </View>
+            <CalendarPicker value={startDate} onChange={changeStartDate} />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -348,6 +392,52 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 8,
   },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.12)",
+  },
+  dateRowText: {
+    color: "white",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: Colors.bg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: Colors.textPrimary,
+  },
+  modalClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   dayTabs: {
     flexDirection: "row",
     gap: 8,
@@ -356,13 +446,15 @@ const styles = StyleSheet.create({
   },
   dayTab: {
     flex: 1,
-    height: 36,
+    paddingVertical: 7,
+    minHeight: 36,
     borderRadius: 8,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
   },
   dayTabActive: {
     backgroundColor: Colors.dark,
@@ -375,6 +467,14 @@ const styles = StyleSheet.create({
   },
   dayTabTextActive: {
     color: "white",
+  },
+  dayTabDate: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.textThird,
+  },
+  dayTabDateActive: {
+    color: "rgba(255,255,255,0.75)",
   },
   actions: {
     flexDirection: "row",
