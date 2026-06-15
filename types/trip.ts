@@ -44,10 +44,31 @@ export interface SlotItem {
   durationMin?: number;
 }
 
+export interface DayWeather {
+  /** WMO 기상 코드 */
+  code: number;
+  /** 최고기온 (℃, 반올림) */
+  tempMax: number;
+  /** 최저기온 (℃, 반올림) */
+  tempMin: number;
+  /** 강수 확률 % (예보에만 있음) */
+  precipProb?: number;
+  /** 강수량 mm */
+  precipMm?: number;
+  /** 받아온 시각 (ISO) */
+  fetchedAt: string;
+  /** 지난 날짜의 실측(확정) 기록이면 true, 미래 예보면 false */
+  isHistorical: boolean;
+  /** 16일 예보 범위를 넘어 평년값(최근 N년 평균)으로 채운 추정치면 true */
+  isClimate?: boolean;
+}
+
 export interface DayPlan {
   day: number;
   date: string;
   slots: SlotItem[];
+  /** 그날의 날씨. 지난 날짜는 실측 기록으로 한 번 저장하면 계속 보존된다. */
+  weather?: DayWeather;
 }
 
 export interface Trip {

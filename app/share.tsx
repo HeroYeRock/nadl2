@@ -8,8 +8,10 @@ import { PlaceInsights } from "@/components/trip/PlaceInsights";
 import { Colors } from "@/constants/colors";
 import { REGION_MAP } from "@/constants/regions";
 import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
+import { durationLabelKo, formatShortKo } from "@/services/dates";
 import { directionsUrl, placeMapsUrl } from "@/services/maps";
-import { decodeTripFromShare, fetchSharedTrip } from "@/services/share";
+import { buildScheduleRows, decodeTripFromShare, fetchSharedTrip } from "@/services/share";
+import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, Trip } from "@/types/trip";
 
 function openExternal(url: string) {
@@ -78,15 +80,24 @@ export default function SharePage() {
   const dayPlan = trip.days.find((d) => d.day === activeDay) ?? trip.days[0];
   const filledSlots = dayPlan ? dayPlan.slots.filter((s) => s.place) : [];
   const places = filledSlots.map((s) => s.place).filter(Boolean) as Place[];
+  const scheduleRows = buildScheduleRows(trip);
+  const tripStart = scheduleRows[0]?.date;
+  const tripEnd = scheduleRows[scheduleRows.length - 1]?.date;
 
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         <View style={[styles.hero, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.region}>
-            {region?.label ?? "여행"} · {trip.duration}일
+            {region?.label ?? "여행"} · {durationLabelKo(trip.duration)}
           </Text>
           <Text style={styles.title}>{trip.title}</Text>
+          {tripStart ? (
+            <Text style={styles.dateLine}>
+              🗓️ {formatShortKo(tripStart)}
+              {tripEnd && trip.duration > 1 ? ` ~ ${formatShortKo(tripEnd)}` : ""}
+            </Text>
+          ) : null}
           {trip.arrivalTime || trip.departureTime ? (
             <Text style={styles.flightLine}>
               ✈️ {trip.arrivalTime ?? "--"} 도착 / {trip.departureTime ?? "--"} 출발
@@ -97,6 +108,40 @@ export default function SharePage() {
             <Text style={styles.sharedBadgeText}>공유된 일정 · 보기 전용</Text>
           </View>
         </View>
+
+        {scheduleRows.length > 1 ? (
+          <View style={styles.overview}>
+            <Text style={styles.overviewTitle}>전체 일정 · {durationLabelKo(trip.duration)}</Text>
+            {scheduleRows.map((row) => {
+              const active = activeDay === row.day;
+              return (
+                <Pressable
+                  key={row.day}
+                  onPress={() => setActiveDay(row.day)}
+                  style={[styles.overviewRow, active && styles.overviewRowActive]}
+                >
+                  <View style={styles.overviewDay}>
+                    <Text style={[styles.overviewDayNum, active && styles.overviewActiveText]}>
+                      {row.day}일차
+                    </Text>
+                    {row.date ? <Text style={styles.overviewDate}>{formatShortKo(row.date)}</Text> : null}
+                  </View>
+                  <Text
+                    style={[styles.overviewArea, active && styles.overviewActiveText]}
+                    numberOfLines={1}
+                  >
+                    {row.areaLabel}
+                  </Text>
+                  {row.weather ? (
+                    <Text style={styles.overviewTemp}>
+                      {describeWeather(row.weather.code).emoji} {row.weather.tempMax}°/{row.weather.tempMin}°
+                    </Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
         {trip.days.length > 1 ? (
           <View style={styles.dayTabs}>
@@ -121,6 +166,15 @@ export default function SharePage() {
 
         <View style={styles.timeline}>
           <Text style={styles.sectionTitle}>{activeDay}일차 일정</Text>
+          {dayPlan?.weather ? (
+            <Text style={styles.dayWeather}>
+              {describeWeather(dayPlan.weather.code).emoji} {describeWeather(dayPlan.weather.code).label} · 최고{" "}
+              {dayPlan.weather.tempMax}° / 최저 {dayPlan.weather.tempMin}° · {weatherSourceLabel(dayPlan.weather)}
+              {weatherDetailLine(dayPlan.weather, dayPlan.date)
+                ? ` · ${weatherDetailLine(dayPlan.weather, dayPlan.date)}`
+                : ""}
+            </Text>
+          ) : null}
           {filledSlots.length === 0 ? (
             <Text style={styles.emptyDesc}>이 날에 추가된 장소가 없어요.</Text>
           ) : (
@@ -206,7 +260,33 @@ const styles = StyleSheet.create({
   },
   region: { color: Colors.primary, fontSize: 13, fontWeight: "900" },
   title: { color: "white", fontSize: 28, fontWeight: "900", marginTop: 5 },
+  dateLine: { color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: "800", marginTop: 8 },
   flightLine: { color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: "700", marginTop: 8 },
+  overview: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: Colors.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 14,
+  },
+  overviewTitle: { fontSize: 14, fontWeight: "900", color: Colors.textPrimary, marginBottom: 8 },
+  overviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  overviewRowActive: { backgroundColor: "#FFF3EE" },
+  overviewDay: { width: 86 },
+  overviewDayNum: { fontSize: 13, fontWeight: "900", color: Colors.textPrimary },
+  overviewDate: { fontSize: 11, fontWeight: "700", color: Colors.textThird, marginTop: 1 },
+  overviewArea: { flex: 1, fontSize: 13, fontWeight: "800", color: Colors.textSecond },
+  overviewTemp: { fontSize: 12, fontWeight: "800", color: Colors.textSecond },
+  overviewActiveText: { color: Colors.primary },
   sharedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -247,6 +327,13 @@ const styles = StyleSheet.create({
   },
   timeline: { paddingHorizontal: 20, paddingTop: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "900", color: Colors.textPrimary, marginBottom: 14 },
+  dayWeather: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.textSecond,
+    marginTop: -6,
+    marginBottom: 14,
+  },
   row: { flexDirection: "row", gap: 12 },
   spine: { width: 46, alignItems: "center", paddingTop: 6 },
   time: { fontSize: 10, fontWeight: "800", color: Colors.textSecond, marginBottom: 5 },
