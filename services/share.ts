@@ -168,10 +168,32 @@ function dayAreaLabel(day: DayPlan, fallbackDestination: string): string {
   return areas.length > 4 ? `${shown} 외 일대` : `${shown} 일대`;
 }
 
+export interface ScheduleRow {
+  day: number;
+  /** "YYYY-MM-DD" (스냅샷에 날짜가 없으면 빈 문자열) */
+  date: string;
+  /** "시부야구/신주쿠구 일대" 처럼 그날 동선을 요약한 라벨 */
+  areaLabel: string;
+}
+
+/**
+ * 날짜별 동선 요약 행. 공유 메시지 텍스트(buildScheduleText)와
+ * 공유 페이지의 전체 일정표가 같은 데이터를 쓰도록 한 곳에서 만든다.
+ * 지역 라벨은 그날 장소들의 주소에서 자동 추출한다.
+ */
+export function buildScheduleRows(trip: Trip): ScheduleRow[] {
+  return [...trip.days]
+    .sort((a, b) => a.day - b.day)
+    .map((day) => ({
+      day: day.day,
+      date: day.date,
+      areaLabel: dayAreaLabel(day, trip.destination),
+    }));
+}
+
 /**
  * 공유 메시지에 함께 붙일 일정 요약 텍스트.
- * "3박 4일 일정 / N일차 - 지역 일대" 형태로 날짜별 동선을 한눈에 보여준다.
- * 지역 라벨은 그날 장소들의 주소에서 자동 추출한다.
+ * "🗓️ 제목 · N박 M일 / N일차 - 지역 일대" 형태로 날짜별 동선을 한눈에 보여준다.
  * 링크(URL)는 포함하지 않는다 — 호출 측에서 메시지 맨 끝 단독 줄에 붙이거나
  * 별도 url 필드로 전달해, 링크가 깨지거나 받는 쪽 ID 추출이 어긋나지 않게 한다.
  */
@@ -179,8 +201,8 @@ export function buildScheduleText(trip: Trip): string {
   const nights = trip.duration - 1;
   const durationLabel = nights >= 1 ? `${nights}박 ${trip.duration}일` : "당일";
   const lines: string[] = [`🗓️ ${trip.title} · ${durationLabel}`];
-  for (const day of trip.days) {
-    lines.push(`${day.day}일차 - ${dayAreaLabel(day, trip.destination)}`);
+  for (const row of buildScheduleRows(trip)) {
+    lines.push(`${row.day}일차 - ${row.areaLabel}`);
   }
   return lines.join("\n");
 }
