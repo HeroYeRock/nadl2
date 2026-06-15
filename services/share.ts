@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LZString from "lz-string";
 import { supabase } from "@/services/supabase";
-import type { DayPlan, Place, SlotItem, Trip } from "@/types/trip";
+import { describeWeather } from "@/services/weather";
+import type { DayPlan, DayWeather, Place, SlotItem, Trip } from "@/types/trip";
 
 /**
  * 공유 링크용 trip 스냅샷 인코딩/디코딩 + 동기화.
@@ -39,10 +40,20 @@ interface SlimSlot {
   p?: SlimPlace; // place
 }
 
+interface SlimWeather {
+  c: number; // weather code
+  mx: number; // tempMax
+  mn: number; // tempMin
+  pp?: number; // precipProb
+  pm?: number; // precipMm
+  h: 0 | 1; // isHistorical
+}
+
 interface SlimDay {
   n: number; // day number
   dt: string; // date
   s: SlimSlot[]; // slots
+  w?: SlimWeather; // weather
 }
 
 interface SlimTrip {
@@ -88,6 +99,25 @@ function fatPlace(s: SlimPlace): Place {
   };
 }
 
+function slimWeather(w: DayWeather): SlimWeather {
+  const out: SlimWeather = { c: w.code, mx: w.tempMax, mn: w.tempMin, h: w.isHistorical ? 1 : 0 };
+  if (w.precipProb != null) out.pp = w.precipProb;
+  if (w.precipMm != null) out.pm = w.precipMm;
+  return out;
+}
+
+function fatWeather(s: SlimWeather): DayWeather {
+  return {
+    code: s.c,
+    tempMax: s.mx,
+    tempMin: s.mn,
+    precipProb: s.pp,
+    precipMm: s.pm,
+    isHistorical: s.h === 1,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
 function tripToSlim(trip: Trip): SlimTrip {
   return {
     t: trip.title,
@@ -96,16 +126,20 @@ function tripToSlim(trip: Trip): SlimTrip {
     du: trip.duration,
     a: trip.arrivalTime,
     dp: trip.departureTime,
-    d: trip.days.map((day) => ({
-      n: day.day,
-      dt: day.date,
-      s: day.slots.map((slot) => {
-        const out: SlimSlot = { sl: slot.slot, ti: slot.time };
-        if (slot.customLabel) out.cl = slot.customLabel;
-        if (slot.place) out.p = slimPlace(slot.place);
-        return out;
-      }),
-    })),
+    d: trip.days.map((day) => {
+      const out: SlimDay = {
+        n: day.day,
+        dt: day.date,
+        s: day.slots.map((slot) => {
+          const slim: SlimSlot = { sl: slot.slot, ti: slot.time };
+          if (slot.customLabel) slim.cl = slot.customLabel;
+          if (slot.place) slim.p = slimPlace(slot.place);
+          return slim;
+        }),
+      };
+      if (day.weather) out.w = slimWeather(day.weather);
+      return out;
+    }),
   };
 }
 
@@ -124,6 +158,7 @@ function slimToTrip(slim: SlimTrip): Trip | null {
     days: slim.d.map((day) => ({
       day: day.n,
       date: day.dt,
+      weather: day.w ? fatWeather(day.w) : undefined,
       slots: (day.s ?? []).map<SlotItem>((slot) => ({
         slot: slot.sl,
         time: slot.ti,
@@ -174,6 +209,8 @@ export interface ScheduleRow {
   date: string;
   /** "시부야구/신주쿠구 일대" 처럼 그날 동선을 요약한 라벨 */
   areaLabel: string;
+  /** 그날 날씨 (있을 때만) */
+  weather?: DayWeather;
 }
 
 /**
@@ -188,6 +225,7 @@ export function buildScheduleRows(trip: Trip): ScheduleRow[] {
       day: day.day,
       date: day.date,
       areaLabel: dayAreaLabel(day, trip.destination),
+      weather: day.weather,
     }));
 }
 
@@ -202,7 +240,10 @@ export function buildScheduleText(trip: Trip): string {
   const durationLabel = nights >= 1 ? `${nights}박 ${trip.duration}일` : "당일";
   const lines: string[] = [`🗓️ ${trip.title} · ${durationLabel}`];
   for (const row of buildScheduleRows(trip)) {
-    lines.push(`${row.day}일차 - ${row.areaLabel}`);
+    const w = row.weather
+      ? ` ${describeWeather(row.weather.code).emoji}${row.weather.tempMax}°/${row.weather.tempMin}°`
+      : "";
+    lines.push(`${row.day}일차 - ${row.areaLabel}${w}`);
   }
   return lines.join("\n");
 }

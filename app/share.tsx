@@ -11,6 +11,7 @@ import { getSlotInfo, isCustomSlotId } from "@/constants/timeSlots";
 import { durationLabelKo, formatShortKo } from "@/services/dates";
 import { directionsUrl, placeMapsUrl } from "@/services/maps";
 import { buildScheduleRows, decodeTripFromShare, fetchSharedTrip } from "@/services/share";
+import { describeWeather } from "@/services/weather";
 import type { Place, Trip } from "@/types/trip";
 
 function openExternal(url: string) {
@@ -131,6 +132,11 @@ export default function SharePage() {
                   >
                     {row.areaLabel}
                   </Text>
+                  {row.weather ? (
+                    <Text style={styles.overviewTemp}>
+                      {describeWeather(row.weather.code).emoji} {row.weather.tempMax}°/{row.weather.tempMin}°
+                    </Text>
+                  ) : null}
                 </Pressable>
               );
             })}
@@ -160,6 +166,14 @@ export default function SharePage() {
 
         <View style={styles.timeline}>
           <Text style={styles.sectionTitle}>{activeDay}일차 일정</Text>
+          {dayPlan?.weather ? (
+            <Text style={styles.dayWeather}>
+              {describeWeather(dayPlan.weather.code).emoji} {describeWeather(dayPlan.weather.code).label} · 최고{" "}
+              {dayPlan.weather.tempMax}° / 최저 {dayPlan.weather.tempMin}°
+              {dayPlan.weather.precipProb != null ? ` · 강수확률 ${dayPlan.weather.precipProb}%` : ""}
+              {dayPlan.weather.isHistorical ? "  · 기록" : ""}
+            </Text>
+          ) : null}
           {filledSlots.length === 0 ? (
             <Text style={styles.emptyDesc}>이 날에 추가된 장소가 없어요.</Text>
           ) : (
@@ -270,6 +284,7 @@ const styles = StyleSheet.create({
   overviewDayNum: { fontSize: 13, fontWeight: "900", color: Colors.textPrimary },
   overviewDate: { fontSize: 11, fontWeight: "700", color: Colors.textThird, marginTop: 1 },
   overviewArea: { flex: 1, fontSize: 13, fontWeight: "800", color: Colors.textSecond },
+  overviewTemp: { fontSize: 12, fontWeight: "800", color: Colors.textSecond },
   overviewActiveText: { color: Colors.primary },
   sharedBadge: {
     flexDirection: "row",
@@ -311,6 +326,13 @@ const styles = StyleSheet.create({
   },
   timeline: { paddingHorizontal: 20, paddingTop: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "900", color: Colors.textPrimary, marginBottom: 14 },
+  dayWeather: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.textSecond,
+    marginTop: -6,
+    marginBottom: 14,
+  },
   row: { flexDirection: "row", gap: 12 },
   spine: { width: 46, alignItems: "center", paddingTop: 6 },
   time: { fontSize: 10, fontWeight: "800", color: Colors.textSecond, marginBottom: 5 },

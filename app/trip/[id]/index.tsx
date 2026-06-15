@@ -13,10 +13,12 @@ import { Colors } from "@/constants/colors";
 import { REGION_MAP } from "@/constants/regions";
 import { useAIRecommend } from "@/hooks/useAIRecommend";
 import { useTrip } from "@/hooks/useTrip";
+import { useTripWeather } from "@/hooks/useTripWeather";
 import { getAirportInfo } from "@/services/airports";
 import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
+import { describeWeather } from "@/services/weather";
 import type { Place, SlotId } from "@/types/trip";
 
 const PIN_COLORS = ["#FF3B30", "#0A84FF", "#30D158", "#FF9500", "#5E5CE6", "#AF52DE"];
@@ -47,6 +49,7 @@ export default function TripDetailScreen() {
   const [pendingEnd, setPendingEnd] = useState<string>();
   const { trip, stats, removePlace, deleteSlot, setSlotTime, updateTrip } = useTrip(id);
   const ai = useAIRecommend(trip);
+  useTripWeather(trip);
 
   // 기간을 줄이면 활성 day 가 사라질 수 있으니, 없으면 첫 날로 폴백.
   const dayPlan = trip?.days.find((day) => day.day === activeDay) ?? trip?.days[0];
@@ -234,12 +237,37 @@ export default function TripDetailScreen() {
               <Pressable key={day.day} onPress={() => setActiveDay(day.day)} style={[styles.dayTab, active && styles.dayTabActive]}>
                 <Text style={[styles.dayTabText, active && styles.dayTabTextActive]}>{day.day}일차</Text>
                 {day.date ? (
-                  <Text style={[styles.dayTabDate, active && styles.dayTabDateActive]}>{formatShortKo(day.date)}</Text>
+                  <Text style={[styles.dayTabDate, active && styles.dayTabDateActive]}>
+                    {formatShortKo(day.date)}
+                    {day.weather ? ` ${describeWeather(day.weather.code).emoji}` : ""}
+                  </Text>
                 ) : null}
               </Pressable>
             );
           })}
         </View>
+
+        {dayPlan.weather ? (
+          <View style={styles.weatherBar}>
+            <Text style={styles.weatherEmoji}>{describeWeather(dayPlan.weather.code).emoji}</Text>
+            <View style={styles.weatherInfo}>
+              <Text style={styles.weatherText}>
+                {describeWeather(dayPlan.weather.code).label} · 최고 {dayPlan.weather.tempMax}° / 최저{" "}
+                {dayPlan.weather.tempMin}°
+              </Text>
+              {dayPlan.weather.precipProb != null || dayPlan.weather.precipMm ? (
+                <Text style={styles.weatherSub}>
+                  {dayPlan.weather.precipProb != null ? `강수확률 ${dayPlan.weather.precipProb}%` : ""}
+                  {dayPlan.weather.precipProb != null && dayPlan.weather.precipMm ? " · " : ""}
+                  {dayPlan.weather.precipMm ? `강수량 ${dayPlan.weather.precipMm}mm` : ""}
+                </Text>
+              ) : null}
+            </View>
+            <Text style={[styles.weatherTag, dayPlan.weather.isHistorical && styles.weatherTagPast]}>
+              {dayPlan.weather.isHistorical ? "기록" : "예보"}
+            </Text>
+          </View>
+        ) : null}
 
         <TripMap places={places} pinColors={PIN_COLORS} />
 
@@ -530,6 +558,37 @@ const styles = StyleSheet.create({
   },
   dayTabDateActive: {
     color: "rgba(255,255,255,0.75)",
+  },
+  weatherBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 20,
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  weatherEmoji: { fontSize: 22 },
+  weatherInfo: { flex: 1 },
+  weatherText: { fontSize: 13, fontWeight: "800", color: Colors.textPrimary },
+  weatherSub: { fontSize: 11, fontWeight: "700", color: Colors.textSecond, marginTop: 2 },
+  weatherTag: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.info,
+    backgroundColor: "#EAF3FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  weatherTagPast: {
+    color: Colors.textSecond,
+    backgroundColor: Colors.bg,
   },
   actions: {
     flexDirection: "row",
