@@ -141,9 +141,16 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>AI 추천 코스</Text>
             <Text style={styles.sectionHint}>탭하면 자동 생성</Text>
           </View>
-          {filteredCourses.map((course) => (
-            <CourseCard key={course.id} course={course} onPress={() => handleCourseSelect(course)} />
-          ))}
+          <View style={styles.courseGrid}>
+            {filteredCourses.map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                variant="grid"
+                onPress={() => handleCourseSelect(course)}
+              />
+            ))}
+          </View>
         </View>
       </ScrollView>
 
@@ -257,6 +264,13 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 24,
+  },
+  courseGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    rowGap: 10,
   },
   sectionHeader: {
     paddingHorizontal: 20,
