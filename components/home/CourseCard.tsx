@@ -18,6 +18,8 @@ export interface Course {
 interface Props {
   course: Course;
   onPress?: () => void;
+  /** "row": 가로 전체폭 카드 / "grid": 절반폭 세로 카드(2열용) */
+  variant?: "row" | "grid";
 }
 
 const THEME_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
@@ -29,15 +31,16 @@ const THEME_CONFIG: Record<string, { label: string; bg: string; color: string }>
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function CourseCard({ course, onPress }: Props) {
+export function CourseCard({ course, onPress, variant = "row" }: Props) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const theme = THEME_CONFIG[course.theme] ?? THEME_CONFIG.food;
   const region = REGION_MAP[course.region];
+  const grid = variant === "grid";
 
   return (
     <AnimatedPressable
-      style={[styles.card, animatedStyle]}
+      style={[grid ? styles.cardGrid : styles.card, animatedStyle]}
       onPress={onPress}
       onPressIn={() => {
         scale.value = withSpring(0.98);
@@ -49,8 +52,8 @@ export function CourseCard({ course, onPress }: Props) {
       <View style={[styles.icon, { backgroundColor: theme.bg }]}>
         <Ionicons name={course.icon} size={22} color={theme.color} />
       </View>
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>
+      <View style={grid ? styles.bodyGrid : styles.body}>
+        <Text style={styles.title} numberOfLines={grid ? 2 : 1}>
           {course.title}
         </Text>
         <Text style={styles.meta}>
@@ -60,7 +63,7 @@ export function CourseCard({ course, onPress }: Props) {
           <Text style={[styles.tagText, { color: theme.color }]}>{theme.label}</Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={17} color={Colors.textThird} />
+      {grid ? null : <Ionicons name="chevron-forward" size={17} color={Colors.textThird} />}
     </AnimatedPressable>
   );
 }
@@ -81,6 +84,17 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
+  cardGrid: {
+    width: "48%",
+    backgroundColor: Colors.card,
+    borderRadius: 8,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
+  },
   icon: {
     width: 48,
     height: 48,
@@ -90,6 +104,9 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  bodyGrid: {
+    marginTop: 12,
   },
   title: {
     fontSize: 15,
