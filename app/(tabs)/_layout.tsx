@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, router } from "expo-router";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 
@@ -12,10 +12,15 @@ function TabIcon({ name, color, focused }: { name: keyof typeof Ionicons.glyphMa
   );
 }
 
+// 기본 라벨은 numberOfLines={1} 로 overflow:hidden 이 걸려 웹에서 한글 받침(예: "홈"의 ㅁ)이 잘린다.
+// 커스텀 Text 로 렌더해 클리핑을 없앤다.
+function TabLabel({ label, color }: { label: string; color: string }) {
+  return <Text style={[styles.tabLabel, { color }]}>{label}</Text>;
+}
+
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  // 웹은 safe-area inset 이 0 이라 라벨이 화면/브라우저 하단 바에 바짝 붙어 잘린다.
-  // 최소 하단 여백을 확보해 라벨을 위로 띄운다.
+  // 웹은 safe-area inset 이 0 이라 라벨이 화면/브라우저 하단 바에 바짝 붙는다. 최소 여백 확보.
   const bottomInset = Math.max(insets.bottom, Platform.OS === "web" ? 18 : 0);
 
   return (
@@ -24,14 +29,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textThird,
-        // 라벨을 항상 아이콘 아래로 고정 (웹/넓은 화면에서 옆으로 붙어 잘리는 것 방지)
         tabBarLabelPosition: "below-icon",
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "700",
-          lineHeight: 16,
-          marginTop: 2,
-        },
         tabBarStyle: {
           height: 60 + bottomInset + 8,
           paddingTop: 8,
@@ -46,6 +44,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "홈",
+          tabBarLabel: ({ color }) => <TabLabel label="홈" color={color} />,
           tabBarIcon: ({ color, focused }) => <TabIcon name="home-outline" color={color} focused={focused} />,
         }}
       />
@@ -53,6 +52,7 @@ export default function TabsLayout() {
         name="explore"
         options={{
           title: "탐색",
+          tabBarLabel: ({ color }) => <TabLabel label="탐색" color={color} />,
           tabBarIcon: ({ color, focused }) => <TabIcon name="compass-outline" color={color} focused={focused} />,
         }}
       />
@@ -75,6 +75,7 @@ export default function TabsLayout() {
         name="trips"
         options={{
           title: "내 여행",
+          tabBarLabel: ({ color }) => <TabLabel label="내 여행" color={color} />,
           tabBarIcon: ({ color, focused }) => <TabIcon name="albums-outline" color={color} focused={focused} />,
         }}
       />
@@ -82,6 +83,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: "설정",
+          tabBarLabel: ({ color }) => <TabLabel label="설정" color={color} />,
           tabBarIcon: ({ color, focused }) => <TabIcon name="person-outline" color={color} focused={focused} />,
         }}
       />
@@ -98,6 +100,14 @@ const styles = StyleSheet.create({
   },
   activeIcon: {
     transform: [{ translateY: -1 }],
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    lineHeight: 15,
+    textAlign: "center",
+    marginTop: 2,
+    paddingBottom: 1,
   },
   createButton: {
     position: "absolute",
