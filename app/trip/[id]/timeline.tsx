@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -34,7 +35,7 @@ import {
   type TravelMode,
 } from "@/services/maps";
 import { getCurrentLocation, type Coords, type GeoStatus } from "@/services/geolocation";
-import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
+import { describeWeather, isForecastAvailable, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, SlotItem, Trip } from "@/types/trip";
 
 type ModeOverride = "auto" | "driving";
@@ -66,7 +67,18 @@ export default function TimelineScreen() {
   const [focusedPlace, setFocusedPlace] = useState<SlotItem | null>(null);
 
   useEnrichTripPlaces(trip);
-  useTripWeather(trip);
+  const { refresh: refreshWeather } = useTripWeather(trip);
+  const [weatherUpdating, setWeatherUpdating] = useState(false);
+
+  async function updateWeather() {
+    if (weatherUpdating) return;
+    setWeatherUpdating(true);
+    try {
+      await refreshWeather();
+    } finally {
+      setWeatherUpdating(false);
+    }
+  }
 
   useEffect(() => {
     setGeoStatus("loading");
@@ -234,14 +246,27 @@ export default function TimelineScreen() {
               <Text style={styles.weatherBannerSub}>{weatherDetailLine(dayPlan.weather, dayPlan.date)}</Text>
             ) : null}
           </View>
-          <Text
-            style={[
-              styles.weatherBannerTag,
-              (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherBannerTagPast,
-            ]}
-          >
-            {weatherSourceLabel(dayPlan.weather)}
-          </Text>
+          {dayPlan.weather.isClimate && isForecastAvailable(dayPlan.date) ? (
+            <Pressable onPress={updateWeather} disabled={weatherUpdating} style={styles.weatherBannerUpdateBtn}>
+              {weatherUpdating ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <>
+                  <Ionicons name="refresh" size={12} color={Colors.primary} />
+                  <Text style={styles.weatherBannerUpdateText}>업데이트</Text>
+                </>
+              )}
+            </Pressable>
+          ) : (
+            <Text
+              style={[
+                styles.weatherBannerTag,
+                (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherBannerTagPast,
+              ]}
+            >
+              {weatherSourceLabel(dayPlan.weather)}
+            </Text>
+          )}
         </View>
       ) : null}
       <FlightBanner trip={trip} day={activeDay} position="arrival" />
@@ -680,6 +705,22 @@ const styles = StyleSheet.create({
   weatherBannerTagPast: {
     color: Colors.textSecond,
     backgroundColor: Colors.bg,
+  },
+  weatherBannerUpdateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    minWidth: 66,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: "#FFF3EE",
+  },
+  weatherBannerUpdateText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: Colors.primary,
   },
   list: { paddingHorizontal: 20, paddingTop: 6 },
   listCompact: { paddingHorizontal: 14, paddingTop: 6 },

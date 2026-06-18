@@ -23,10 +23,17 @@ export function parseYMD(value?: string): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-/** 오늘부터 offset 일 뒤의 "YYYY-MM-DD" (로컬 기준) */
+/**
+ * 오늘부터 offset 일 뒤의 "YYYY-MM-DD".
+ * 기기 타임존과 무관하게 항상 한국시간(KST, UTC+9) 기준으로 계산한다.
+ * (Hermes 등 Intl 타임존 미지원 환경에서도 동작하도록 UTC 오프셋으로 직접 계산)
+ */
 export function ymdFromToday(offsetDays = 0): string {
-  const now = new Date();
-  return toYMD(new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays));
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000 + offsetDays * 86400000);
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(kst.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 /** "6/15 (월)" */
