@@ -12,8 +12,8 @@ import type { DayWeather, Trip } from "@/types/trip";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
 const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
-// Open-Meteo 표준 일별 예보는 최대 16일. 그 너머는 평년값으로 대체.
-const FORECAST_MAX_DAYS = 16;
+// Open-Meteo 예보 제공 범위는 오늘 + 15일(총 16일). 그 너머는 평년값으로 대체.
+const FORECAST_MAX_DAYS = 15;
 const CLIMATE_YEARS = 5;
 
 export interface Coords {
