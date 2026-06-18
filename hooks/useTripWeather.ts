@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import { parseYMD, ymdFromToday } from "@/services/dates";
 import { fetchDaysWeather, resolveTripCoords } from "@/services/weather";
@@ -15,18 +15,22 @@ const FORECAST_MAX_DAYS = 15;
  * - 미래/오늘: 예보를 받아 갱신 (오래되면 다시)
  * - 지난 날짜: 실측 기록을 한 번 받아 저장하면 그대로 보존
  * - 평년값(미정)은 날짜가 예보 범위로 들어오면 실제 예보로 자동 교체
- * 화면 진입 시 + 앱이 다시 활성화될 때마다 재평가하므로 하루 단위로 예보가 갱신된다.
+ * 화면 진입 + 앱 재활성화 시 재평가하며, 반환된 refresh() 로 수동 갱신도 가능하다.
  */
 export function useTripWeather(trip?: Trip) {
   const updateTrip = useTripStore((s) => s.updateTrip);
   // 날짜가 바뀌면 다시 받도록 시그니처를 의존성에 넣는다.
   const dateSig = trip?.days.map((d) => d.date).join(",");
+  const runRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
-    if (!trip) return;
+    if (!trip) {
+      runRef.current = null;
+      return;
+    }
     let cancelled = false;
 
-    async function run() {
+    async function run(force = false) {
       const today = ymdFromToday();
       const now = Date.now();
       const todayMs = parseYMD(today).getTime();
@@ -38,8 +42,10 @@ export function useTripWeather(trip?: Trip) {
           const isPast = d.date < today;
           if (isPast) return !w?.isHistorical; // 확정 기록이 이미 있으면 건너뜀
           if (!w) return true; // 오늘/미래: 받은 적 없으면 받기
-          // 평년값이었는데 이제 예보 범위(오늘+15일)에 들어왔으면 실제 예보로 교체
           const diffDays = Math.round((parseYMD(d.date).getTime() - todayMs) / 86400000);
+          // 수동 갱신: 예보 범위 내면 무조건 다시 받기
+          if (force && diffDays >= 0 && diffDays <= FORECAST_MAX_DAYS) return true;
+          // 평년값이 예보 범위로 들어왔으면 실제 예보로 교체
           if (w.isClimate && diffDays <= FORECAST_MAX_DAYS) return true;
           // 오래된 예보면 갱신
           return now - new Date(w.fetchedAt).getTime() > FORECAST_STALE_MS;
@@ -67,6 +73,7 @@ export function useTripWeather(trip?: Trip) {
       if (changed) await updateTrip(latest.id, { days });
     }
 
+    runRef.current = run;
     run();
     // 앱이 다시 활성화될 때(다음 날 재방문 등)마다 재평가 → 하루 단위로 예보 갱신
     const sub = AppState.addEventListener("change", (state) => {
@@ -76,7 +83,12 @@ export function useTripWeather(trip?: Trip) {
     return () => {
       cancelled = true;
       sub.remove();
+      runRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.id, dateSig, updateTrip]);
+
+  // 수동 갱신 (예보 범위 내 날짜를 강제로 다시 받음)
+  const refresh = useCallback(() => runRef.current?.(true) ?? Promise.resolve(), []);
+  return { refresh };
 }

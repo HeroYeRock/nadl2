@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TripMap } from "@/components/map/TripMap";
@@ -18,7 +18,7 @@ import { getAirportInfo } from "@/services/airports";
 import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
-import { describeWeather, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
+import { describeWeather, isForecastAvailable, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
 import type { Place, SlotId } from "@/types/trip";
 
 const PIN_COLORS = ["#FF3B30", "#0A84FF", "#30D158", "#FF9500", "#5E5CE6", "#AF52DE"];
@@ -50,7 +50,18 @@ export default function TripDetailScreen() {
   const [pendingEnd, setPendingEnd] = useState<string>();
   const { trip, stats, removePlace, deleteSlot, setSlotTime, updateTrip } = useTrip(id);
   const ai = useAIRecommend(trip);
-  useTripWeather(trip);
+  const { refresh: refreshWeather } = useTripWeather(trip);
+  const [weatherUpdating, setWeatherUpdating] = useState(false);
+
+  async function updateWeather() {
+    if (weatherUpdating) return;
+    setWeatherUpdating(true);
+    try {
+      await refreshWeather();
+    } finally {
+      setWeatherUpdating(false);
+    }
+  }
 
   // 기간을 줄이면 활성 day 가 사라질 수 있으니, 없으면 첫 날로 폴백.
   const dayPlan = trip?.days.find((day) => day.day === activeDay) ?? trip?.days[0];
@@ -260,14 +271,27 @@ export default function TripDetailScreen() {
                 <Text style={styles.weatherSub}>{weatherDetailLine(dayPlan.weather, dayPlan.date)}</Text>
               ) : null}
             </View>
-            <Text
-              style={[
-                styles.weatherTag,
-                (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherTagPast,
-              ]}
-            >
-              {weatherSourceLabel(dayPlan.weather)}
-            </Text>
+            {dayPlan.weather.isClimate && isForecastAvailable(dayPlan.date) ? (
+              <Pressable onPress={updateWeather} disabled={weatherUpdating} style={styles.weatherUpdateBtn}>
+                {weatherUpdating ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="refresh" size={12} color={Colors.primary} />
+                    <Text style={styles.weatherUpdateText}>업데이트</Text>
+                  </>
+                )}
+              </Pressable>
+            ) : (
+              <Text
+                style={[
+                  styles.weatherTag,
+                  (dayPlan.weather.isHistorical || dayPlan.weather.isClimate) && styles.weatherTagPast,
+                ]}
+              >
+                {weatherSourceLabel(dayPlan.weather)}
+              </Text>
+            )}
           </View>
         ) : null}
 
@@ -590,6 +614,22 @@ const styles = StyleSheet.create({
   weatherTagPast: {
     color: Colors.textSecond,
     backgroundColor: Colors.bg,
+  },
+  weatherUpdateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    minWidth: 66,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: "#FFF3EE",
+  },
+  weatherUpdateText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: Colors.primary,
   },
   actions: {
     flexDirection: "row",

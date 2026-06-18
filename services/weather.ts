@@ -6,7 +6,7 @@
  * 좌표는 trip 의 장소에서, 없으면 목적지 이름을 지오코딩해 구한다.
  */
 
-import { parseYMD } from "@/services/dates";
+import { parseYMD, ymdFromToday } from "@/services/dates";
 import type { DayWeather, Trip } from "@/types/trip";
 
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
@@ -253,11 +253,18 @@ export async function fetchDaysWeather(
   return out;
 }
 
-/** 그 날짜의 실제 예보가 제공되기 시작하는 날(= 날짜 − 16일)을 "M/D" 로. */
+/** 그 날짜의 실제 예보가 제공되기 시작하는 날(= 날짜 − 15일)을 "M/D" 로. */
 export function forecastAvailableFrom(dateYMD: string): string {
   const d = parseYMD(dateYMD);
   const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - FORECAST_MAX_DAYS);
   return `${from.getMonth() + 1}/${from.getDate()}`;
+}
+
+/** 그 날짜의 실제 예보가 지금 제공 가능한지 (오늘 ~ 오늘+15일 범위). */
+export function isForecastAvailable(dateYMD: string): boolean {
+  if (!dateYMD) return false;
+  const diff = dayDiff(dateYMD, ymdFromToday());
+  return diff >= 0 && diff <= FORECAST_MAX_DAYS;
 }
 
 /** 날씨 출처 라벨: 지난 날짜는 "기록", 16일 너머(평년 추정)는 "미정", 그 외 "예보". */
