@@ -21,6 +21,8 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textThird,
+        // 웹/넓은 화면에서 라벨이 아이콘 옆으로 붙어 잘리는 것을 막고 항상 아래로 고정
+        tabBarLabelPosition: "below-icon",
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "700",
