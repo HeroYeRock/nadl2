@@ -23,7 +23,7 @@ if (!defined('GROQ_KEY')) {
     define('GROQ_KEY', getenv('GROQ_KEY') ?: 'PUT_GROQ_KEY_HERE');
 }
 if (!defined('GROQ_MODEL')) {
-    define('GROQ_MODEL', getenv('GROQ_MODEL') ?: 'llama-3.1-8b-instant');
+    define('GROQ_MODEL', getenv('GROQ_MODEL') ?: 'openai/gpt-oss-20b');
 }
 if (!defined('APP_TOKEN')) {
     define('APP_TOKEN', getenv('APP_TOKEN') ?: 'nadl2_heroyerock_secret');
@@ -155,9 +155,13 @@ function ai_recommend() {
             array('role' => 'user', 'content' => $prompt),
         ),
         'temperature' => 0.25,
-        'max_completion_tokens' => 300,
+        'max_completion_tokens' => 1024,
         'response_format' => array('type' => 'json_object'),
     );
+    // gpt-oss 등 추론 모델은 reasoning 토큰을 소모하므로 effort 를 낮춰 응답 확보
+    if (strpos(GROQ_MODEL, 'gpt-oss') !== false) {
+        $payload['reasoning_effort'] = 'low';
+    }
 
     $data = curl_json(
         'https://api.groq.com/openai/v1/chat/completions',

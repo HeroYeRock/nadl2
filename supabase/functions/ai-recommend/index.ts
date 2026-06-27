@@ -59,7 +59,9 @@ Deno.serve(async (req) => {
   }
 
   const groqKey = Deno.env.get("GROQ_KEY");
-  const groqModel = Deno.env.get("GROQ_MODEL") ?? "llama-3.1-8b-instant";
+  const groqModel = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
+  // gpt-oss 등 추론 모델은 reasoning 토큰을 소모하므로 effort 를 낮춰 JSON 응답 확보
+  const supportsReasoning = groqModel.includes("gpt-oss");
   if (!groqKey) {
     return jsonResponse({ error: "missing_groq_key" }, 500);
   }
@@ -97,8 +99,9 @@ Deno.serve(async (req) => {
           { role: "user", content: prompt },
         ],
         temperature: 0.25,
-        max_completion_tokens: 300,
+        max_completion_tokens: 1024,
         response_format: { type: "json_object" },
+        ...(supportsReasoning ? { reasoning_effort: "low" } : {}),
       }),
     });
 
