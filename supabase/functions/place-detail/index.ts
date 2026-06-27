@@ -254,8 +254,10 @@ async function buildInsights(result: any): Promise<{
   highlights?: string[];
 } | null> {
   const groqKey = Deno.env.get("GROQ_KEY");
-  const groqModel = Deno.env.get("GROQ_MODEL") ?? "llama-3.1-8b-instant";
+  const groqModel = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
   if (!groqKey) return null;
+  // gpt-oss 등 추론 모델은 reasoning 토큰을 소모하므로 effort 를 낮춰 JSON 응답 확보
+  const supportsReasoning = groqModel.includes("gpt-oss");
 
   const types: string[] = Array.isArray(result.types) ? result.types : [];
   const isFood = types.some((t) => FOOD_TYPES.has(t));
@@ -309,8 +311,9 @@ async function buildInsights(result: any): Promise<{
           { role: "user", content: prompt },
         ],
         temperature: 0.2,
-        max_completion_tokens: 320,
+        max_completion_tokens: 1024,
         response_format: { type: "json_object" },
+        ...(supportsReasoning ? { reasoning_effort: "low" } : {}),
       }),
     });
 

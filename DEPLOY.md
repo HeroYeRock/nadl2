@@ -25,12 +25,15 @@ Dashboard → Project Settings → Edge Functions → Secrets 에 등록:
 |---|---|
 | `GOOGLE_PLACES_KEY` | (기존 cafe24 `config.local.php` 값) |
 | `GROQ_KEY` | (기존 Groq 키) |
-| `GROQ_MODEL` | `llama-3.1-8b-instant` |
+| `GROQ_MODEL` | `openai/gpt-oss-20b` |
 
 CLI로 한 번에:
 ```bash
-supabase secrets set GOOGLE_PLACES_KEY=xxx GROQ_KEY=xxx GROQ_MODEL=llama-3.1-8b-instant
+supabase secrets set GOOGLE_PLACES_KEY=xxx GROQ_KEY=xxx GROQ_MODEL=openai/gpt-oss-20b
 ```
+
+> ⚠️ Llama 3.1 8B Instant 는 2026-08-16 종료 예정 → `openai/gpt-oss-20b` (Groq) 로 교체.
+> 모델 변경은 시크릿(`GROQ_MODEL`) 갱신 + Edge Functions 재배포가 모두 필요합니다.
 
 ### 1-4. Edge Functions 배포
 프로젝트 루트에서:
