@@ -132,7 +132,7 @@ export default function TimelineScreen() {
       setDirectionsTarget(null);
       setFocusedPlace(slot);
     } else {
-      openExternalMaps(placeMapsUrl(slot.place!));
+      openExternalMaps(placeMapsUrl(slot.place!, trip.region));
     }
   }
 
@@ -141,7 +141,7 @@ export default function TimelineScreen() {
       setDirectionsTarget(slot);
     } else {
       const mode = resolveMode(slot.place!);
-      openExternalMaps(directionsUrl(slot.place!, mode, origin));
+      openExternalMaps(directionsUrl(slot.place!, mode, origin, trip.region));
     }
   }
 
@@ -437,8 +437,8 @@ export default function TimelineScreen() {
                   const slot = directionsTarget ?? focused;
                   if (!slot?.place) return;
                   const url = directionsTarget
-                    ? directionsUrl(slot.place, resolveMode(slot.place), origin)
-                    : placeMapsUrl(slot.place);
+                    ? directionsUrl(slot.place, resolveMode(slot.place), origin, trip.region)
+                    : placeMapsUrl(slot.place, trip.region);
                   openExternalMaps(url);
                 }}
                 style={styles.mapOverlayExternal}

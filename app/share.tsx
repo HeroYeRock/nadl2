@@ -211,14 +211,14 @@ export default function SharePage() {
                     {slot.place ? (
                       <View style={styles.btnRow}>
                         <Pressable
-                          onPress={() => openExternal(placeMapsUrl(slot.place!))}
+                          onPress={() => openExternal(placeMapsUrl(slot.place!, trip.region))}
                           style={styles.btnSecondary}
                         >
                           <Ionicons name="map-outline" size={14} color={Colors.primary} />
                           <Text style={styles.btnSecondaryText}>지도에서 보기</Text>
                         </Pressable>
                         <Pressable
-                          onPress={() => openExternal(directionsUrl(slot.place!, "transit"))}
+                          onPress={() => openExternal(directionsUrl(slot.place!, "transit", null, trip.region))}
                           style={styles.btnPrimary}
                         >
                           <Ionicons name="navigate-outline" size={14} color="white" />
