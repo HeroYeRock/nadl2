@@ -16,6 +16,7 @@ import { useTrip } from "@/hooks/useTrip";
 import { useTripWeather } from "@/hooks/useTripWeather";
 import { getAirportInfo } from "@/services/airports";
 import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
+import { usesNaverMap } from "@/services/maps";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
 import { describeWeather, isForecastAvailable, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
@@ -23,8 +24,22 @@ import type { Place, SlotId } from "@/types/trip";
 
 const PIN_COLORS = ["#FF3B30", "#0A84FF", "#30D158", "#FF9500", "#5E5CE6", "#AF52DE"];
 
-function mapsUrl(places: Place[]) {
-  if (!places.length) return "https://www.google.com/maps";
+function mapsUrl(places: Place[], region?: string) {
+  if (!places.length) {
+    return usesNaverMap(region) ? "https://map.naver.com" : "https://www.google.com/maps";
+  }
+  if (usesNaverMap(region)) {
+    // 네이버: 첫 장소 → 마지막 장소 길찾기 (1곳이면 장소 검색)
+    const first = places[0];
+    if (places.length === 1) {
+      const q = encodeURIComponent(`${first.name ?? ""} ${first.address ?? ""}`.trim() || `${first.lat},${first.lng}`);
+      return `https://map.naver.com/p/search/${q}`;
+    }
+    const last = places[places.length - 1];
+    const s = `${first.lng},${first.lat},${encodeURIComponent(first.name ?? "출발")}`;
+    const g = `${last.lng},${last.lat},${encodeURIComponent(last.name ?? "도착")}`;
+    return `https://map.naver.com/p/directions/${s}/${g}/-/transit`;
+  }
   const origin = `${places[0].lat},${places[0].lng}`;
   const destination = `${places[places.length - 1].lat},${places[places.length - 1].lng}`;
   const waypoints = places.slice(1, -1).map((place) => `${place.lat},${place.lng}`).join("|");
@@ -315,9 +330,9 @@ export default function TripDetailScreen() {
             <Ionicons name="sparkles-outline" size={18} color={Colors.primary} />
             <Text style={styles.actionText}>빈 시간 추천</Text>
           </Pressable>
-          <Pressable onPress={() => Linking.openURL(mapsUrl(places))} style={styles.actionButton}>
+          <Pressable onPress={() => Linking.openURL(mapsUrl(places, trip.region))} style={styles.actionButton}>
             <Ionicons name="navigate-outline" size={18} color={Colors.primary} />
-            <Text style={styles.actionText}>구글맵</Text>
+            <Text style={styles.actionText}>{usesNaverMap(trip.region) ? "네이버지도" : "구글맵"}</Text>
           </Pressable>
         </View>
 
