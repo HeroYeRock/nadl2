@@ -68,28 +68,25 @@ function uniquePlaces(places: Place[]): Place[] {
   });
 }
 
-// 숙박시설은 어떤 시간대 슬롯에도 어울리지 않으므로 후보에서 제외한다.
-// (Google 텍스트 검색에 호텔/모텔이 섞여 들어오는 경우가 있어 방어적으로 거른다)
-const LODGING_CATEGORIES = new Set([
-  "lodging",
-  "hotel",
-  "motel",
-  "resort_hotel",
-  "extended_stay_hotel",
-  "bed_and_breakfast",
-  "guest_house",
-  "hostel",
-  "campground",
-  "rv_park",
-  "apartment_complex",
-  "real_estate_agency",
+// 여행 일정에 어울리지 않는 장소(숙박·편의·비관광 시설)는 후보에서 제외한다.
+// (Google 텍스트/주변 검색에 호텔·편의점·주유소 등이 섞여 들어오는 경우가 있어 방어적으로 거른다)
+const EXCLUDED_CATEGORIES = new Set([
+  // 숙박
+  "lodging", "hotel", "motel", "resort_hotel", "extended_stay_hotel",
+  "bed_and_breakfast", "guest_house", "hostel", "campground", "rv_park",
+  // 생활 편의/비관광 시설
+  "convenience_store", "gas_station", "parking", "atm", "bank",
+  "car_rental", "car_repair", "car_dealer", "car_wash",
+  "post_office", "hospital", "pharmacy", "drugstore", "doctor",
+  "storage", "moving_company", "real_estate_agency", "apartment_complex",
 ]);
-// 카테고리가 어긋나도 이름으로 한 번 더 거른다 (한/영/일 명확한 표현만)
-const LODGING_NAME = /호텔|모텔|리조트|펜션|게스트\s?하우스|hotel|motel|resort|hostel|guesthouse|ホテル|旅館/i;
+// 카테고리가 어긋나도 이름으로 한 번 더 거른다 (명확한 표현만)
+const EXCLUDED_NAME =
+  /호텔|모텔|리조트|펜션|게스트\s?하우스|hotel|motel|resort|hostel|guesthouse|ホテル|旅館|편의점|GS25|세븐일레븐|이마트24|미니스톱|주유소|충전소|주차장|약국/i;
 
-function isLodging(place: Place): boolean {
-  if (place.category && LODGING_CATEGORIES.has(place.category)) return true;
-  return LODGING_NAME.test(place.name ?? "");
+function isExcludedPlace(place: Place): boolean {
+  if (place.category && EXCLUDED_CATEGORIES.has(place.category)) return true;
+  return EXCLUDED_NAME.test(place.name ?? "");
 }
 
 async function collectCandidates(trip: Trip, day: number, slot: SlotId): Promise<Place[]> {
@@ -133,9 +130,9 @@ async function collectCandidates(trip: Trip, day: number, slot: SlotId): Promise
     raw = await textSearchPlaces(keyword);
   }
 
-  // 숙박시설 제외 + 여행 전체에서 이미 쓴 장소 제외(일자 간 중복 방지)
+  // 비관광 시설(숙박·편의점·주유소 등) 제외 + 여행 전체에서 이미 쓴 장소 제외(일자 간 중복 방지)
   const filtered = uniquePlaces(raw).filter(
-    (p) => !isLodging(p) && (!p.placeId || !used.has(p.placeId)),
+    (p) => !isExcludedPlace(p) && (!p.placeId || !used.has(p.placeId)),
   );
 
   return filtered.slice(0, 10);
