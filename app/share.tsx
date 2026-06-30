@@ -161,7 +161,7 @@ export default function SharePage() {
         ) : null}
 
         <View style={styles.mapWrap}>
-          <EmbedMap mode="browse" places={places} destination={trip.destination} />
+          <EmbedMap mode="browse" places={places} destination={trip.destination} region={trip.region} />
         </View>
 
         <View style={styles.timeline}>
