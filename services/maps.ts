@@ -8,9 +8,30 @@ export function usesNaverMap(region?: string): boolean {
   return region === "kr";
 }
 
-/** 네이버 지도 장소 검색 URL (이름+주소로 검색). 좌표만 있으면 좌표로. */
-function naverPlaceUrl(place: Pick<Place, "lat" | "lng" | "name" | "address">): string {
-  const text = `${place.name ?? ""} ${place.address ?? ""}`.trim();
+/**
+ * 한국 주소에서 짧은 지역 토큰(동/리/읍/면/구/시/군) 하나를 뽑는다.
+ * 전체 주소를 그대로 검색하면 네이버에서 "없는 지역"이 나오므로, 이름 옆에 붙일
+ * 간단한 지역만 추린다. 못 찾으면 빈 문자열.
+ */
+function shortAreaFromAddress(address?: string): string {
+  if (!address) return "";
+  const tokens = address.split(/[\s,]+/).filter(Boolean);
+  for (const suffix of ["동", "리", "읍", "면", "구", "시", "군"]) {
+    const hit = tokens.find((t) => t.length >= 2 && new RegExp(`[가-힣]+${suffix}$`).test(t));
+    if (hit) return hit;
+  }
+  return "";
+}
+
+/**
+ * 네이버 지도 장소 검색 URL.
+ * 이름 + 짧은 지역(예: "본스치킨 세화리")으로 검색해 정확히 매칭되게 한다.
+ * (전체 주소를 붙이면 네이버가 인식하지 못함)
+ */
+export function naverPlaceUrl(place: Pick<Place, "lat" | "lng" | "name" | "address">): string {
+  const name = (place.name ?? "").trim();
+  const area = shortAreaFromAddress(place.address);
+  const text = [name, area].filter(Boolean).join(" ").trim();
   const query = text ? encodeURIComponent(text) : `${place.lat},${place.lng}`;
   return `https://map.naver.com/p/search/${query}`;
 }

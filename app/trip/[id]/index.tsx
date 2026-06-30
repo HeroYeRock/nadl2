@@ -16,7 +16,7 @@ import { useTrip } from "@/hooks/useTrip";
 import { useTripWeather } from "@/hooks/useTripWeather";
 import { getAirportInfo } from "@/services/airports";
 import { daysInclusive, durationLabelKo, formatShortKo } from "@/services/dates";
-import { usesNaverMap } from "@/services/maps";
+import { naverPlaceUrl, usesNaverMap } from "@/services/maps";
 import { buildScheduleText, createShareUrl } from "@/services/share";
 import { droppedDaysWithPlaces, isSlotInFlightWindow, resizeTripDays } from "@/services/tripHelpers";
 import { describeWeather, isForecastAvailable, weatherDetailLine, weatherSourceLabel } from "@/services/weather";
@@ -29,16 +29,9 @@ function mapsUrl(places: Place[], region?: string) {
     return usesNaverMap(region) ? "https://map.naver.com" : "https://www.google.com/maps";
   }
   if (usesNaverMap(region)) {
-    // 네이버: 첫 장소 → 마지막 장소 길찾기 (1곳이면 장소 검색)
-    const first = places[0];
-    if (places.length === 1) {
-      const q = encodeURIComponent(`${first.name ?? ""} ${first.address ?? ""}`.trim() || `${first.lat},${first.lng}`);
-      return `https://map.naver.com/p/search/${q}`;
-    }
-    const last = places[places.length - 1];
-    const s = `${first.lng},${first.lat},${encodeURIComponent(first.name ?? "출발")}`;
-    const g = `${last.lng},${last.lat},${encodeURIComponent(last.name ?? "도착")}`;
-    return `https://map.naver.com/p/directions/${s}/${g}/-/transit`;
+    // 네이버 웹은 좌표 기반 다구간 길찾기 URL 이 불안정하므로, 첫 장소를 네이버 지도로 연다.
+    // (구간별 길찾기는 각 장소 카드의 '길찾기' 버튼 사용)
+    return naverPlaceUrl(places[0]);
   }
   const origin = `${places[0].lat},${places[0].lng}`;
   const destination = `${places[places.length - 1].lat},${places[places.length - 1].lng}`;
