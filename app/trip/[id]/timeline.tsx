@@ -421,6 +421,7 @@ export default function TimelineScreen() {
               origin={origin}
               travelMode={directionsMode}
               destination={trip.destination}
+              region={trip.region}
             />
             {inDirectionsMode ? (
               <Pressable

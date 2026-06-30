@@ -2,7 +2,8 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import WebView from "react-native-webview";
 import { Colors } from "@/constants/colors";
 import type { Place, SlotItem } from "@/types/trip";
-import { haversineKm, type TravelMode } from "@/services/maps";
+import { haversineKm, usesNaverMap, type TravelMode } from "@/services/maps";
+import { NaverEmbedMap } from "./NaverEmbedMap";
 
 interface Props {
   /** 'browse' = 활성 day 전체 동선, 'directions' = 선택된 슬롯으로 가는 경로 */
@@ -13,6 +14,8 @@ interface Props {
   travelMode?: TravelMode;
   /** 여행지 도시명 — 좌표 없을 때 검색 기본 뷰로 사용 */
   destination?: string;
+  /** 여행 지역. "kr"(국내) 이면 웹에서 네이버 지도로 표시 */
+  region?: string;
 }
 
 const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? "";
@@ -106,6 +109,21 @@ function buildEmbedUrl(props: Props): string {
 }
 
 export function EmbedMap(props: Props) {
+  // 국내(kr) 일정은 웹에서 네이버 지도로 표시 (Client ID 가 있을 때)
+  if (
+    Platform.OS === "web" &&
+    usesNaverMap(props.region) &&
+    process.env.EXPO_PUBLIC_NAVER_MAP_CLIENT_ID
+  ) {
+    return (
+      <NaverEmbedMap
+        places={props.places}
+        selectedSlot={props.selectedSlot}
+        destination={props.destination}
+      />
+    );
+  }
+
   if (!MAPS_KEY) {
     return (
       <View style={styles.fallback}>
