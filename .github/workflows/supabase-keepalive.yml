@@ -1,17 +1,18 @@
-# Supabase 무료 플랜은 일정 기간 요청이 없으면 프로젝트를 자동 일시정지한다.
-# 3일마다 DB 를 거치는 가벼운 REST 요청을 보내 깨어 있게 유지한다.
+# Supabase 무료 플랜은 일정 기간 활동이 없으면 프로젝트를 자동 일시정지한다.
+# 읽기 요청만으로는 활동으로 인정되지 않아(실제로 3일마다 읽기 → 약 8일 만에 정지),
+# 매일 heartbeat 행을 갱신하는 쓰기 RPC(keepalive_ping, 0006 마이그레이션)를 호출한다.
 name: Supabase keepalive
 
 on:
   schedule:
-    - cron: "17 3 */3 * *" # 3일마다 03:17 UTC (12:17 KST)
+    - cron: "17 3 * * *" # 매일 03:17 UTC (12:17 KST)
   workflow_dispatch: # Actions 탭에서 수동 실행 가능
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST
+      - name: Write heartbeat to Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -21,12 +22,18 @@ jobs:
             exit 1
           fi
           status=$(curl -sS -o /tmp/body -w "%{http_code}" --max-time 30 \
-            "$SUPABASE_URL/rest/v1/place_popularity?select=*&limit=1" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/keepalive_ping" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}') || status="000"
           echo "HTTP $status"
-          head -c 300 /tmp/body; echo
-          if [ "$status" -ge 500 ] || [ "$status" = "000" ]; then
-            echo "::error::Supabase 응답 실패 (일시정지/삭제 여부를 대시보드에서 확인하세요)"
+          head -c 300 /tmp/body 2>/dev/null; echo
+          if [ "$status" = "404" ]; then
+            echo "::error::keepalive_ping 함수가 없습니다. supabase/migrations/0006_keepalive.sql 을 SQL Editor 에서 실행하세요."
+            exit 1
+          fi
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "::error::Supabase heartbeat 실패 (일시정지 여부를 대시보드에서 확인하세요)"
             exit 1
           fi
